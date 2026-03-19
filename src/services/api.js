@@ -66,6 +66,7 @@ export const createCheckoutSession = (enrollmentId) =>
 
 // Admin
 export const getUsers = () => API.get('/users/manage/');
+export const createUser = (data) => API.post('/users/manage/', data);
 export const updateUser = (id, data) => API.patch(`/users/manage/${id}/`, data);
 export const deleteUser = (id) => API.delete(`/users/manage/${id}/`);
 

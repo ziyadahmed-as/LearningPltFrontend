@@ -10,7 +10,10 @@ import CourseDetailPage from './pages/CourseDetailPage';
 import MyEnrollmentsPage from './pages/MyEnrollmentsPage';
 import ProfilePage from './pages/ProfilePage';
 import MyCoursesPage from './pages/MyCoursesPage';
-import AdminUsersPage from './pages/AdminUsersPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import CourseEditorPage from './pages/CourseEditorPage';
+import LessonEditorPage from './pages/LessonEditorPage';
+import LessonViewPage from './pages/LessonViewPage';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -41,8 +44,22 @@ function AppRoutes() {
         element={<ProtectedRoute allowedRoles={['INSTRUCTOR']}><MyCoursesPage /></ProtectedRoute>}
       />
       <Route
-        path="/admin/users"
-        element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminUsersPage /></ProtectedRoute>}
+        path="/admin"
+        element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminDashboardPage /></ProtectedRoute>}
+      />
+      {/* Legacy redirect kept for any bookmarks */}
+      <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminDashboardPage /></ProtectedRoute>} />
+      <Route
+        path="/editor/courses/:id"
+        element={<ProtectedRoute allowedRoles={['INSTRUCTOR', 'ADMIN']}><CourseEditorPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/editor/lessons/:id"
+        element={<ProtectedRoute allowedRoles={['INSTRUCTOR', 'ADMIN']}><LessonEditorPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/learning/:courseId/lessons/:lessonId"
+        element={<ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']}><LessonViewPage /></ProtectedRoute>}
       />
     </Routes>
   );

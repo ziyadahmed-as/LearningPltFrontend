@@ -54,9 +54,37 @@ export const getCourse = (id) => API.get(`/courses/courses/${id}/`);
 export const createCourse = (data) => API.post('/courses/courses/', data);
 export const updateCourse = (id, data) => API.patch(`/courses/courses/${id}/`, data);
 export const deleteCourse = (id) => API.delete(`/courses/courses/${id}/`);
+export const approveCourse = (id) => API.post(`/courses/courses/${id}/approve/`);
+export const unapproveCourse = (id) => API.post(`/courses/courses/${id}/unapprove/`);
+// (Admin) get all courses including unapproved ones
+export const getAllCourses = () => API.get('/courses/courses/');
 
 // Categories
 export const getCategories = () => API.get('/courses/categories/');
+export const createCategory = (data) => API.post('/courses/categories/', data);
+export const updateCategory = (id, data) => API.patch(`/courses/categories/${id}/`, data);
+export const deleteCategory = (id) => API.delete(`/courses/categories/${id}/`);
+
+// Modules
+export const getModules = (courseId) => API.get(`/courses/modules/${courseId ? `?course=${courseId}` : ''}`);
+export const createModule = (data) => API.post('/courses/modules/', data);
+export const updateModule = (id, data) => API.patch(`/courses/modules/${id}/`, data);
+export const deleteModule = (id) => API.delete(`/courses/modules/${id}/`);
+
+// Lessons
+export const getLesson = (id) => API.get(`/courses/lessons/${id}/`);
+export const createLesson = (data) => API.post('/courses/lessons/', data);
+export const updateLesson = (id, data) => API.patch(`/courses/lessons/${id}/`, data);
+export const deleteLesson = (id) => API.delete(`/courses/lessons/${id}/`);
+export const markLessonCompleted = (id) => API.post(`/courses/lessons/${id}/mark_completed/`);
+
+// Lesson Attachments
+export const uploadLessonImage = (data) => API.post('/courses/lesson-images/', data, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const uploadLessonFile = (data) => API.post('/courses/lesson-files/', data, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
 
 // Enrollment
 export const enrollCourse = (courseId) => API.post(`/courses/courses/${courseId}/enroll/`);

@@ -16,7 +16,7 @@ export default function Navbar() {
             <>
               {user.role === 'STUDENT' && <Link to="/my-enrollments">My Enrollments</Link>}
               {user.role === 'INSTRUCTOR' && <Link to="/my-courses">My Courses</Link>}
-              {user.role === 'ADMIN' && <Link to="/admin/users">Manage Users</Link>}
+              {user.role === 'ADMIN' && <Link to="/admin">Admin Dashboard</Link>}
               <Link to="/profile">Profile</Link>
               <button onClick={logoutUser}>Logout</button>
             </>

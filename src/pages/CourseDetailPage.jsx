@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getCourse, enrollCourse } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -24,6 +24,8 @@ export default function CourseDetailPage() {
     try {
       const { data } = await enrollCourse(id);
       setEnrollMsg(data.detail);
+      // Reload course to update is_enrolled
+      getCourse(id).then(({ data }) => setCourse(data));
     } catch (err) {
       setEnrollError(err.response?.data?.detail || 'Failed to enroll');
     }
@@ -31,6 +33,13 @@ export default function CourseDetailPage() {
 
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
   if (!course) return <div className="empty-state"><p className="empty-state-text">Course not found</p></div>;
+
+  const startLearning = () => {
+    const firstLesson = course.modules?.[0]?.lessons?.[0];
+    if (firstLesson) {
+      navigate(`/learning/${course.id}/lessons/${firstLesson.id}`);
+    }
+  };
 
   return (
     <div>
@@ -47,8 +56,11 @@ export default function CourseDetailPage() {
           )}
         </div>
         <div className="course-detail-actions">
-          {user && user.role === 'STUDENT' && (
+          {user && user.role === 'STUDENT' && !course.is_enrolled && (
             <button className="btn btn-primary" onClick={handleEnroll}>Enroll Now</button>
+          )}
+          {user && user.role === 'STUDENT' && course.is_enrolled && (
+            <button className="btn btn-success" onClick={startLearning}>Start Learning</button>
           )}
           {!user && (
             <a href="/login" className="btn btn-primary">Login to Enroll</a>
@@ -76,9 +88,15 @@ export default function CourseDetailPage() {
                 {mod.title}
               </div>
               {mod.lessons?.map((lesson, li) => (
-                <div className="lesson-item" key={lesson.id}>
+                <div 
+                  className={`lesson-item ${course.is_enrolled ? 'clickable' : ''}`} 
+                  key={lesson.id}
+                  onClick={() => course.is_enrolled && navigate(`/learning/${course.id}/lessons/${lesson.id}`)}
+                  style={{ cursor: course.is_enrolled ? 'pointer' : 'default' }}
+                >
                   <div className="lesson-icon">{li + 1}</div>
                   {lesson.title}
+                  {lesson.is_completed && <span className="badge badge-success" style={{ marginLeft: 'var(--space-md)' }}>Completed</span>}
                   {lesson.video_url && <span className="badge badge-info" style={{ marginLeft: 'auto' }}>Video</span>}
                 </div>
               ))}

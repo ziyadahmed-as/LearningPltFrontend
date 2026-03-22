@@ -15,11 +15,11 @@ export default function CourseDetailPage() {
   useEffect(() => {
     getCourse(id)
       .then(({ data }) => setCourse(data))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
 
     // Record a view for this course
-    recordCourseView(id).catch(() => {});
+    recordCourseView(id).catch(() => { });
   }, [id]);
 
   const handleEnroll = async () => {
@@ -39,7 +39,7 @@ export default function CourseDetailPage() {
   if (!course) return <div className="empty-state"><p className="empty-state-text">Course not found</p></div>;
 
   const startLearning = () => {
-    const firstLesson = course.modules?.[0]?.lessons?.[0];
+    const firstLesson = course.lessons?.[0];
     if (firstLesson) {
       navigate(`/learning/${course.id}/lessons/${firstLesson.id}`);
     }
@@ -92,8 +92,8 @@ export default function CourseDetailPage() {
                 {mod.title}
               </div>
               {mod.lessons?.map((lesson, li) => (
-                <div 
-                  className={`lesson-item ${course.is_enrolled ? 'clickable' : ''}`} 
+                <div
+                  className={`lesson-item ${course.is_enrolled ? 'clickable' : ''}`}
                   key={lesson.id}
                   onClick={() => course.is_enrolled && navigate(`/learning/${course.id}/lessons/${lesson.id}`)}
                   style={{ cursor: course.is_enrolled ? 'pointer' : 'default' }}

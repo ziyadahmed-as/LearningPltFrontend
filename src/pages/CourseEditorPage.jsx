@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getCourse, updateCourse,
-  createModule, deleteModule,
   createLesson, deleteLesson,
   getCategories
 } from '../services/api';
@@ -56,29 +55,13 @@ export default function CourseEditorPage() {
     } catch { alert('Failed to update publish status'); }
   };
 
-  const handleAddModule = async () => {
-    const title = prompt('Enter module title:');
-    if (!title) return;
-    try {
-      await createModule({ course: id, title, order: course.modules.length });
-      loadCourse();
-    } catch { alert('Failed to add module'); }
-  };
-
-  const handleAddLesson = async (moduleId, order) => {
+  const handleAddLesson = async () => {
     const title = prompt('Enter lesson title:');
     if (!title) return;
     try {
-      await createLesson({ module: moduleId, title, content: 'Write your content here...', order });
+      await createLesson({ course: id, title, content: 'Write your content here...', order: course.lessons?.length || 0 });
       loadCourse();
     } catch { alert('Failed to add lesson'); }
-  };
-
-  const handleDeleteModule = async (moduleId) => {
-    if (window.confirm('Delete this module and all its lessons?')) {
-      await deleteModule(moduleId);
-      loadCourse();
-    }
   };
 
   const handleDeleteLesson = async (lessonId) => {
@@ -91,14 +74,14 @@ export default function CourseEditorPage() {
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
   if (!course) return <div className="empty-state"><p className="empty-state-text">Course not found</p></div>;
 
-  const lessonCount = course.modules?.reduce((sum, m) => sum + (m.lessons?.length || 0), 0) || 0;
+  const lessonCount = course.lessons?.length || 0;
 
   return (
     <div>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 className="page-title">Course Editor: {course.title}</h1>
-          <p className="page-subtitle">Manage chapters, lessons, and course settings</p>
+          <p className="page-subtitle">Manage lessons and course settings</p>
           {/* Status badges */}
           <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
             <span className={`badge ${course.is_published ? 'badge-success' : 'badge-warning'}`}>
@@ -109,7 +92,7 @@ export default function CourseEditorPage() {
                 {course.is_approved ? '✅ Approved' : '⏳ Awaiting Approval'}
               </span>
             )}
-            <span className="badge badge-info">{course.modules?.length || 0} modules · {lessonCount} lessons</span>
+            <span className="badge badge-info">{lessonCount} lessons</span>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -164,64 +147,39 @@ export default function CourseEditorPage() {
         </div>
       )}
 
-      {/* Add Module button */}
+      {/* Add Lesson button */}
       <div style={{ marginBottom: 'var(--space-2xl)' }}>
-        <button className="btn btn-primary" onClick={handleAddModule}>+ Add Chapter (Module)</button>
+        <button className="btn btn-primary" onClick={handleAddLesson}>+ Add Lesson</button>
       </div>
 
-      {course.modules?.length === 0 ? (
+      {course.lessons?.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">🧱</div>
-          <p className="empty-state-text">No modules added yet. Start by adding a chapter.</p>
+          <div className="empty-state-icon">📄</div>
+          <p className="empty-state-text">No lessons added yet. Start by adding a lesson.</p>
         </div>
       ) : (
-        <div className="editor-modules-container">
-          {course.modules.map((mod, mi) => (
-            <div className="editor-module" key={mod.id}>
-              <div className="editor-module-header">
-                <div>
-                  <span className="badge badge-info" style={{ marginRight: 'var(--space-md)' }}>Chapter {mi + 1}</span>
-                  <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>{mod.title}</span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginLeft: '0.5rem' }}>
-                    ({mod.lessons?.length || 0} lessons)
-                  </span>
+        <div className="editor-lessons-list" style={{ maxWidth: '800px' }}>
+          {course.lessons.map((lesson, li) => (
+            <div className="editor-lesson" key={lesson.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--background)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{
+                  width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-elevated)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.75rem', marginRight: 'var(--space-md)', color: 'var(--text-muted)'
+                }}>
+                  {li + 1}
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn btn-sm btn-secondary" onClick={() => handleAddLesson(mod.id, mod.lessons?.length || 0)}>+ Add Lesson</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDeleteModule(mod.id)}>Delete</button>
+                <span style={{ fontWeight: 500 }}>{lesson.title}</span>
+                {/* Content indicators */}
+                <div style={{ display: 'flex', gap: '0.3rem', marginLeft: '0.5rem' }}>
+                  {lesson.video_url && <span title="Has video" style={{ fontSize: '0.8rem' }}>🎬</span>}
+                  {lesson.images?.length > 0 && <span title="Has images" style={{ fontSize: '0.8rem' }}>🖼️</span>}
+                  {lesson.files?.length > 0 && <span title="Has files" style={{ fontSize: '0.8rem' }}>📄</span>}
                 </div>
               </div>
-              <div className="editor-lessons-list">
-                {mod.lessons?.length === 0 ? (
-                  <div style={{ padding: 'var(--space-lg)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                    No lessons in this chapter yet. Click "+ Add Lesson" above.
-                  </div>
-                ) : (
-                  mod.lessons.map((lesson, li) => (
-                    <div className="editor-lesson" key={lesson.id}>
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div style={{
-                          width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-elevated)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '0.75rem', marginRight: 'var(--space-md)', color: 'var(--text-muted)'
-                        }}>
-                          {li + 1}
-                        </div>
-                        <span style={{ fontWeight: 500 }}>{lesson.title}</span>
-                        {/* Content indicators */}
-                        <div style={{ display: 'flex', gap: '0.3rem', marginLeft: '0.5rem' }}>
-                          {lesson.video_url && <span title="Has video" style={{ fontSize: '0.8rem' }}>🎬</span>}
-                          {lesson.images?.length > 0 && <span title="Has images" style={{ fontSize: '0.8rem' }}>🖼️</span>}
-                          {lesson.files?.length > 0 && <span title="Has files" style={{ fontSize: '0.8rem' }}>📄</span>}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-sm btn-primary" onClick={() => navigate(`/editor/lessons/${lesson.id}`)}>Edit Content</button>
-                        <button className="btn btn-sm btn-secondary" onClick={() => handleDeleteLesson(lesson.id)}>Remove</button>
-                      </div>
-                    </div>
-                  ))
-                )}
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-sm btn-primary" onClick={() => navigate(`/editor/lessons/${lesson.id}`)}>Edit Content</button>
+                <button className="btn btn-sm btn-secondary" onClick={() => handleDeleteLesson(lesson.id)}>Remove</button>
               </div>
             </div>
           ))}

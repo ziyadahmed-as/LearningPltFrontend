@@ -155,7 +155,7 @@ export default function MyCoursesPage() {
               <div className="card" key={course.id}>
                 <div className="card-header" style={{ paddingBottom: '0.5rem' }}>
                   <h3 className="card-title" style={{ marginBottom: '0.2rem' }}>{course.title}</h3>
-                  <p className="card-subtitle">{course.module_count} modules · {course.lesson_count} lessons</p>
+                  <p className="card-subtitle">{course.lesson_count} lessons</p>
                 </div>
                 
                 {/* Embedded Stats Section */}

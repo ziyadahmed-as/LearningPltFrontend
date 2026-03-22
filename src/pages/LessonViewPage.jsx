@@ -43,9 +43,9 @@ export default function LessonViewPage() {
       setMsg('Lesson completed!');
       loadData();
       // Find next lesson to suggest
-      const allLessons = course.modules.flatMap(m => m.lessons);
+      const allLessons = course.lessons || [];
       const currentIndex = allLessons.findIndex(l => l.id === parseInt(lessonId));
-      if (currentIndex < allLessons.length - 1) {
+      if (currentIndex !== -1 && currentIndex < allLessons.length - 1) {
         const next = allLessons[currentIndex + 1];
         setMsg(prev => prev + ` Next: ${next.title}`);
       }
@@ -78,30 +78,24 @@ export default function LessonViewPage() {
       <aside className="lesson-sidebar">
         <h2 style={{ fontSize: '1.2rem', fontWeight: 800, padding: 'var(--space-md)' }}>{course.title}</h2>
         <div className="sidebar-modules">
-          {course.modules?.map((mod, mi) => (
-            <div key={mod.id}>
-              <div className="sidebar-module-title">Module {mi + 1}: {mod.title}</div>
-              {mod.lessons?.map((l) => {
-                // A lesson is locked if previous lesson is not completed
-                const allLessons = course.modules.flatMap(m => m.lessons);
-                const idx = allLessons.findIndex(lx => lx.id === l.id);
-                const isLocked = idx > 0 && !allLessons[idx - 1].is_completed;
-                
-                return (
-                  <div 
-                    key={l.id} 
-                    className={`lesson-progress-item ${l.id === parseInt(lessonId) ? 'active' : ''} ${l.is_completed ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}
-                    onClick={() => !isLocked && navigate(`/learning/${courseId}/lessons/${l.id}`)}
-                  >
-                    <span className="lesson-progress-icon">
-                      {l.is_completed ? '✅' : isLocked ? '🔒' : '📖'}
-                    </span>
-                    <span style={{ flex: 1 }}>{l.title}</span>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+          <div className="sidebar-module-title">Course Lessons</div>
+          {course.lessons?.map((l, idx) => {
+            // A lesson is locked if previous lesson is not completed
+            const isLocked = idx > 0 && !course.lessons[idx - 1].is_completed;
+            
+            return (
+              <div 
+                key={l.id} 
+                className={`lesson-progress-item ${l.id === parseInt(lessonId) ? 'active' : ''} ${l.is_completed ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}
+                onClick={() => !isLocked && navigate(`/learning/${courseId}/lessons/${l.id}`)}
+              >
+                <span className="lesson-progress-icon">
+                  {l.is_completed ? '✅' : isLocked ? '🔒' : '📖'}
+                </span>
+                <span style={{ flex: 1 }}>{l.title}</span>
+              </div>
+            );
+          })}
         </div>
       </aside>
 

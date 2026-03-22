@@ -67,11 +67,7 @@ export const createCategory = (data) => API.post('/courses/categories/', data);
 export const updateCategory = (id, data) => API.patch(`/courses/categories/${id}/`, data);
 export const deleteCategory = (id) => API.delete(`/courses/categories/${id}/`);
 
-// Modules
-export const getModules = (courseId) => API.get(`/courses/modules/${courseId ? `?course=${courseId}` : ''}`);
-export const createModule = (data) => API.post('/courses/modules/', data);
-export const updateModule = (id, data) => API.patch(`/courses/modules/${id}/`, data);
-export const deleteModule = (id) => API.delete(`/courses/modules/${id}/`);
+
 
 // Lessons
 export const getLesson = (id) => API.get(`/courses/lessons/${id}/`);

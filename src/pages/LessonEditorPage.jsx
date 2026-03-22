@@ -2,8 +2,34 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   getLesson, updateLesson, 
-  uploadLessonImage, uploadLessonFile 
+  uploadLessonImage, uploadLessonFile,
+  createContentBlock, updateContentBlock, deleteContentBlock
 } from '../services/api';
+
+function ContentBlockEditor({ block, onUpdate, onDelete }) {
+  const [data, setData] = useState({ title: block.title || '', content: block.content || '' });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    await onUpdate(block.id, data);
+    setSaving(false);
+  };
+
+  return (
+    <div className="card" style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+      <form onSubmit={handleSave}>
+        <input className="form-input" style={{ marginBottom: '0.75rem', fontWeight: 'bold' }} value={data.title} onChange={e => setData({...data, title: e.target.value})} placeholder="Sub-topic Title (optional)" />
+        <textarea className="form-textarea" style={{ marginBottom: '0.75rem', minHeight: '150px' }} value={data.content} onChange={e => setData({...data, content: e.target.value})} placeholder="Detailed content for this block..." required />
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button type="submit" className="btn btn-sm btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save Block'}</button>
+          <button type="button" className="btn btn-sm btn-secondary" onClick={() => onDelete(block.id)}>Delete Block</button>
+        </div>
+      </form>
+    </div>
+  );
+}
 
 export default function LessonEditorPage() {
   const { id } = useParams();
@@ -73,6 +99,28 @@ export default function LessonEditorPage() {
     }
   };
 
+  const handleAddBlock = async () => {
+    try {
+      await createContentBlock({ lesson: id, title: '', content: 'New content block...', order: lesson.content_blocks?.length || 0 });
+      loadLesson();
+    } catch { alert('Failed to add block'); }
+  };
+
+  const handleUpdateBlock = async (blockId, data) => {
+    try {
+      await updateContentBlock(blockId, data);
+      alert('Block saved successfully!');
+      loadLesson();
+    } catch { alert('Failed to save block'); }
+  };
+
+  const handleDeleteBlock = async (blockId) => {
+    if (window.confirm('Delete this content block?')) {
+      await deleteContentBlock(blockId);
+      loadLesson();
+    }
+  };
+
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
   if (!lesson) return <div className="empty-state">Lesson not found</div>;
 
@@ -86,7 +134,7 @@ export default function LessonEditorPage() {
         <button className="btn btn-secondary" onClick={() => navigate(-1)}>Back</button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 'var(--space-2xl)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 'var(--space-2xl)', alignItems: 'start' }}>
         <div className="auth-card" style={{ width: '100%', marginBottom: 'var(--space-xl)' }}>
           <form onSubmit={handleSave}>
             <div className="form-group">
@@ -102,9 +150,31 @@ export default function LessonEditorPage() {
               <textarea className="form-textarea" style={{ minHeight: '300px' }} value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})} />
             </div>
             <button className="btn btn-primary btn-block" type="submit" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Content'}
+              {saving ? 'Saving...' : 'Save Main Content'}
             </button>
           </form>
+        </div>
+
+        <div style={{ gridColumn: '1 / -1', marginBottom: 'var(--space-xl)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.25rem' }}>Content Blocks (Sub-topics)</h2>
+            <button className="btn btn-success" onClick={handleAddBlock}>+ Add Content Block</button>
+          </div>
+          
+          {lesson.content_blocks?.length === 0 ? (
+            <div className="empty-state" style={{ padding: '2rem' }}>
+              <p className="empty-state-text">No content blocks yet. Add blocks for multiple descriptions.</p>
+            </div>
+          ) : (
+            <div>
+              {lesson.content_blocks?.map((block, idx) => (
+                <div key={block.id}>
+                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Block {idx + 1}</h4>
+                  <ContentBlockEditor block={block} onUpdate={handleUpdateBlock} onDelete={handleDeleteBlock} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xl)' }}>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getCourse, updateCourse,
+  createChapter, deleteChapter,
   createLesson, deleteLesson,
   getCategories
 } from '../services/api';
@@ -55,11 +56,29 @@ export default function CourseEditorPage() {
     } catch { alert('Failed to update publish status'); }
   };
 
-  const handleAddLesson = async () => {
+  const handleAddChapter = async () => {
+    const title = prompt('Enter chapter title:');
+    if (!title) return;
+    try {
+      await createChapter({ course: id, title, order: course.chapters?.length || 0 });
+      loadCourse();
+    } catch { alert('Failed to add chapter'); }
+  };
+
+  const handleDeleteChapter = async (chapterId) => {
+    if (window.confirm('Delete this chapter and all its lessons?')) {
+      await deleteChapter(chapterId);
+      loadCourse();
+    }
+  };
+
+  const handleAddLesson = async (chapterId) => {
     const title = prompt('Enter lesson title:');
     if (!title) return;
     try {
-      await createLesson({ course: id, title, content: 'Write your content here...', order: course.lessons?.length || 0 });
+      // Find the chapter to calculate lesson order
+      const chapter = course.chapters.find(c => c.id === chapterId);
+      await createLesson({ chapter: chapterId, title, content: '', order: chapter?.lessons?.length || 0 });
       loadCourse();
     } catch { alert('Failed to add lesson'); }
   };
@@ -147,40 +166,54 @@ export default function CourseEditorPage() {
         </div>
       )}
 
-      {/* Add Lesson button */}
+      {/* Add Chapter button */}
       <div style={{ marginBottom: 'var(--space-2xl)' }}>
-        <button className="btn btn-primary" onClick={handleAddLesson}>+ Add Lesson</button>
+        <button className="btn btn-primary" onClick={handleAddChapter}>+ Add Chapter</button>
       </div>
 
-      {course.lessons?.length === 0 ? (
+      {course.chapters?.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">📄</div>
-          <p className="empty-state-text">No lessons added yet. Start by adding a lesson.</p>
+          <div className="empty-state-icon">📁</div>
+          <p className="empty-state-text">No chapters added yet. Start by adding a chapter.</p>
         </div>
       ) : (
-        <div className="editor-lessons-list" style={{ maxWidth: '800px' }}>
-          {course.lessons.map((lesson, li) => (
-            <div className="editor-lesson" key={lesson.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--background)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', marginBottom: '0.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={{
-                  width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-elevated)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.75rem', marginRight: 'var(--space-md)', color: 'var(--text-muted)'
-                }}>
-                  {li + 1}
-                </div>
-                <span style={{ fontWeight: 500 }}>{lesson.title}</span>
-                {/* Content indicators */}
-                <div style={{ display: 'flex', gap: '0.3rem', marginLeft: '0.5rem' }}>
-                  {lesson.video_url && <span title="Has video" style={{ fontSize: '0.8rem' }}>🎬</span>}
-                  {lesson.images?.length > 0 && <span title="Has images" style={{ fontSize: '0.8rem' }}>🖼️</span>}
-                  {lesson.files?.length > 0 && <span title="Has files" style={{ fontSize: '0.8rem' }}>📄</span>}
+        <div className="editor-chapters-list" style={{ maxWidth: '800px' }}>
+          {course.chapters?.map((chapter, ci) => (
+            <div key={chapter.id} className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                  <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Chapter {ci + 1}:</span> {chapter.title}
+                </h3>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-sm btn-primary" onClick={() => handleAddLesson(chapter.id)}>+ Add Lesson</button>
+                  <button className="btn btn-sm btn-secondary" onClick={() => handleDeleteChapter(chapter.id)}>Delete Chapter</button>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn btn-sm btn-primary" onClick={() => navigate(`/editor/lessons/${lesson.id}`)}>Edit Content</button>
-                <button className="btn btn-sm btn-secondary" onClick={() => handleDeleteLesson(lesson.id)}>Remove</button>
-              </div>
+              
+              {chapter.lessons?.length === 0 ? (
+                 <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.9rem' }}>No lessons in this chapter yet.</p>
+              ) : (
+                <div className="editor-lessons-list">
+                  {chapter.lessons.map((lesson, li) => (
+                    <div className="editor-lesson" key={lesson.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'var(--bg-elevated)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', marginTop: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{
+                          width: '24px', height: '24px', borderRadius: '50%', background: 'var(--background)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '0.75rem', marginRight: 'var(--space-md)', color: 'var(--text-muted)', border: '1px solid var(--border)'
+                        }}>
+                          {li + 1}
+                        </div>
+                        <span style={{ fontWeight: 500 }}>{lesson.title}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className="btn btn-sm btn-primary" onClick={() => navigate(`/editor/lessons/${lesson.id}`)}>Edit Content</button>
+                        <button className="btn btn-sm btn-secondary" onClick={() => handleDeleteLesson(lesson.id)}>Remove</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

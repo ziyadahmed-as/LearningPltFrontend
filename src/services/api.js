@@ -69,12 +69,22 @@ export const deleteCategory = (id) => API.delete(`/courses/categories/${id}/`);
 
 
 
+// Chapters
+export const createChapter = (data) => API.post('/courses/chapters/', data);
+export const updateChapter = (id, data) => API.patch(`/courses/chapters/${id}/`, data);
+export const deleteChapter = (id) => API.delete(`/courses/chapters/${id}/`);
+
 // Lessons
 export const getLesson = (id) => API.get(`/courses/lessons/${id}/`);
 export const createLesson = (data) => API.post('/courses/lessons/', data);
 export const updateLesson = (id, data) => API.patch(`/courses/lessons/${id}/`, data);
 export const deleteLesson = (id) => API.delete(`/courses/lessons/${id}/`);
 export const markLessonCompleted = (id) => API.post(`/courses/lessons/${id}/mark_completed/`);
+
+// Content Blocks
+export const createContentBlock = (data) => API.post('/courses/content-blocks/', data);
+export const updateContentBlock = (id, data) => API.patch(`/courses/content-blocks/${id}/`, data);
+export const deleteContentBlock = (id) => API.delete(`/courses/content-blocks/${id}/`);
 
 // Lesson Attachments
 export const uploadLessonImage = (data) => API.post('/courses/lesson-images/', data, {

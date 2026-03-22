@@ -43,7 +43,7 @@ export default function LessonViewPage() {
       setMsg('Lesson completed!');
       loadData();
       // Find next lesson to suggest
-      const allLessons = course.lessons || [];
+      const allLessons = course.chapters?.flatMap(c => c.lessons || []) || [];
       const currentIndex = allLessons.findIndex(l => l.id === parseInt(lessonId));
       if (currentIndex !== -1 && currentIndex < allLessons.length - 1) {
         const next = allLessons[currentIndex + 1];
@@ -78,24 +78,32 @@ export default function LessonViewPage() {
       <aside className="lesson-sidebar">
         <h2 style={{ fontSize: '1.2rem', fontWeight: 800, padding: 'var(--space-md)' }}>{course.title}</h2>
         <div className="sidebar-modules">
-          <div className="sidebar-module-title">Course Lessons</div>
-          {course.lessons?.map((l, idx) => {
-            // A lesson is locked if previous lesson is not completed
-            const isLocked = idx > 0 && !course.lessons[idx - 1].is_completed;
-            
-            return (
-              <div 
-                key={l.id} 
-                className={`lesson-progress-item ${l.id === parseInt(lessonId) ? 'active' : ''} ${l.is_completed ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}
-                onClick={() => !isLocked && navigate(`/learning/${courseId}/lessons/${l.id}`)}
-              >
-                <span className="lesson-progress-icon">
-                  {l.is_completed ? '✅' : isLocked ? '🔒' : '📖'}
-                </span>
-                <span style={{ flex: 1 }}>{l.title}</span>
+          {course.chapters?.map((chapter, ci) => (
+            <div key={chapter.id} style={{ marginBottom: '1rem' }}>
+              <div className="sidebar-module-title" style={{ background: 'var(--bg-elevated)', padding: '0.5rem var(--space-md)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+                Chapter {ci + 1}: {chapter.title}
               </div>
-            );
-          })}
+              {chapter.lessons?.map((l, li) => {
+                // Flatten all lessons to check sequential locking
+                const allLessons = course.chapters.flatMap(c => c.lessons || []);
+                const globalIdx = allLessons.findIndex(lesson => lesson.id === l.id);
+                const isLocked = globalIdx > 0 && !allLessons[globalIdx - 1].is_completed;
+                
+                return (
+                  <div 
+                    key={l.id} 
+                    className={`lesson-progress-item ${l.id === parseInt(lessonId) ? 'active' : ''} ${l.is_completed ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}
+                    onClick={() => !isLocked && navigate(`/learning/${courseId}/lessons/${l.id}`)}
+                  >
+                    <span className="lesson-progress-icon">
+                      {l.is_completed ? '✅' : isLocked ? '🔒' : '📖'}
+                    </span>
+                    <span style={{ flex: 1 }}>{l.title}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       </aside>
 
@@ -110,12 +118,22 @@ export default function LessonViewPage() {
           </div>
         )}
 
-        <div className="lesson-text" style={{ whiteSpace: 'pre-wrap', marginBottom: 'var(--space-3xl)', fontSize: '1.05rem', lineHeight: 1.8 }}>
+        <div className="lesson-text" style={{ whiteSpace: 'pre-wrap', marginBottom: 'var(--space-xl)', fontSize: '1.05rem', lineHeight: 1.8 }}>
           {lesson.content}
         </div>
 
+        {/* Dynamic Content Blocks */}
+        {lesson.content_blocks?.map((block) => (
+          <div key={block.id} className="content-block" style={{ marginBottom: 'var(--space-2xl)' }}>
+            {block.title && <h3 style={{ marginBottom: 'var(--space-sm)', fontSize: '1.2rem' }}>{block.title}</h3>}
+            <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, color: 'var(--text-secondary)' }}>
+              {block.content}
+            </div>
+          </div>
+        ))}
+
         {lesson.images?.length > 0 && (
-          <div style={{ marginBottom: 'var(--space-2xl)' }}>
+          <div style={{ marginBottom: 'var(--space-2xl)', borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-xl)' }}>
             <h3 style={{ marginBottom: 'var(--space-md)' }}>Images</h3>
             <div className="lesson-media-grid">
               {lesson.images.map(img => (
@@ -129,7 +147,7 @@ export default function LessonViewPage() {
         )}
 
         {lesson.files?.length > 0 && (
-          <div style={{ marginBottom: 'var(--space-2xl)' }}>
+          <div style={{ marginBottom: 'var(--space-2xl)', borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-xl)' }}>
             <h3 style={{ marginBottom: 'var(--space-md)' }}>Supporting Resources</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
               {lesson.files.map(file => (

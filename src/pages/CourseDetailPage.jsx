@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getCourse, enrollCourse } from '../services/api';
+import { getCourse, enrollCourse, recordCourseView } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function CourseDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [enrollMsg, setEnrollMsg] = useState('');
@@ -16,6 +17,9 @@ export default function CourseDetailPage() {
       .then(({ data }) => setCourse(data))
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    // Record a view for this course
+    recordCourseView(id).catch(() => {});
   }, [id]);
 
   const handleEnroll = async () => {

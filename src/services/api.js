@@ -56,6 +56,8 @@ export const updateCourse = (id, data) => API.patch(`/courses/courses/${id}/`, d
 export const deleteCourse = (id) => API.delete(`/courses/courses/${id}/`);
 export const approveCourse = (id) => API.post(`/courses/courses/${id}/approve/`);
 export const unapproveCourse = (id) => API.post(`/courses/courses/${id}/unapprove/`);
+export const getInstructorStats = () => API.get('/courses/courses/instructor_stats/');
+export const recordCourseView = (id) => API.post(`/courses/courses/${id}/record_view/`);
 // (Admin) get all courses including unapproved ones
 export const getAllCourses = () => API.get('/courses/courses/');
 

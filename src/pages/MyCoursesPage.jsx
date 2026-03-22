@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllCourses, createCourse, deleteCourse, updateCourse, getCategories } from '../services/api';
+import { getInstructorStats, createCourse, deleteCourse, updateCourse, getCategories } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function MyCoursesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [courses, setCourses] = useState([]);
+  const [stats, setStats] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -17,12 +17,12 @@ export default function MyCoursesPage() {
 
   const loadData = async () => {
     try {
-      const [coursesRes, catsRes] = await Promise.all([getAllCourses(), getCategories()]);
-      const allCourses = Array.isArray(coursesRes.data) ? coursesRes.data : coursesRes.data.results || [];
-      // Instructors see only their own courses
-      setCourses(allCourses.filter(c => c.instructor === user?.id));
+      const [statsRes, catsRes] = await Promise.all([getInstructorStats(), getCategories()]);
+      setStats(statsRes.data);
       setCategories(Array.isArray(catsRes.data) ? catsRes.data : catsRes.data.results || []);
-    } catch {}
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+    }
     setLoading(false);
   };
 
@@ -66,19 +66,14 @@ export default function MyCoursesPage() {
     setForm(next);
   };
 
-  if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
-
-  const published = courses.filter(c => c.is_published).length;
-  const approved = courses.filter(c => c.is_approved).length;
-  const drafts = courses.filter(c => !c.is_published).length;
-  const pending = courses.filter(c => c.is_published && !c.is_approved).length;
+  if (loading || !stats) return <div className="loading-container"><div className="spinner"></div></div>;
 
   return (
     <div>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
         <div>
           <h1 className="page-title">Instructor Dashboard</h1>
-          <p className="page-subtitle">Create courses, manage lessons, and track approval status</p>
+          <p className="page-subtitle">Create courses, manage lessons, and track performance</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? 'Cancel' : '+ New Course'}
@@ -86,18 +81,29 @@ export default function MyCoursesPage() {
       </div>
 
       {/* Stats overview */}
-      <div className="stats-grid" style={{ marginBottom: '2rem' }}>
-        <div className="stat-card"><div className="stat-value">{courses.length}</div><div className="stat-label">Total Courses</div></div>
-        <div className="stat-card"><div className="stat-value">{published}</div><div className="stat-label">Published</div></div>
+      <div className="stats-grid" style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))' }}>
         <div className="stat-card">
-          <div className="stat-value" style={{ color: approved > 0 ? 'var(--success)' : undefined }}>{approved}</div>
+          <div className="stat-value">{stats.total_courses}</div><div className="stat-label">Total Courses</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{stats.published}</div><div className="stat-label">Published</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value" style={{ color: stats.approved > 0 ? 'var(--success)' : undefined }}>{stats.approved}</div>
           <div className="stat-label">✅ Approved</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value" style={{ color: pending > 0 ? 'var(--warning, #f59e0b)' : undefined }}>{pending}</div>
+          <div className="stat-value" style={{ color: stats.pending > 0 ? 'var(--warning, #f59e0b)' : undefined }}>{stats.pending}</div>
           <div className="stat-label">⏳ Awaiting Approval</div>
         </div>
-        <div className="stat-card"><div className="stat-value">{drafts}</div><div className="stat-label">📝 Drafts</div></div>
+        <div className="stat-card" style={{ background: 'var(--primary-light)' }}>
+          <div className="stat-value" style={{ color: 'var(--primary)' }}>{stats.total_enrollments}</div>
+          <div className="stat-label">Total Enrollments</div>
+        </div>
+        <div className="stat-card" style={{ background: 'var(--primary-light)' }}>
+          <div className="stat-value" style={{ color: 'var(--primary)' }}>{stats.total_views}</div>
+          <div className="stat-label">Total Views</div>
+        </div>
       </div>
 
       {showForm && (
@@ -137,25 +143,50 @@ export default function MyCoursesPage() {
         </div>
       )}
 
-      {courses.length === 0 ? (
+      {stats.courses.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">📖</div>
           <p className="empty-state-text">You haven't created any courses yet. Click "+ New Course" to get started!</p>
         </div>
       ) : (
         <div className="grid-courses">
-          {courses.map((course) => {
-            const lessonCount = course.modules?.reduce((sum, m) => sum + (m.lessons?.length || 0), 0) || 0;
+          {stats.courses.map((course) => {
             return (
               <div className="card" key={course.id}>
-                <div className="card-header">
-                  <h3 className="card-title">{course.title}</h3>
-                  <p className="card-subtitle">{course.modules?.length || 0} modules · {lessonCount} lessons</p>
+                <div className="card-header" style={{ paddingBottom: '0.5rem' }}>
+                  <h3 className="card-title" style={{ marginBottom: '0.2rem' }}>{course.title}</h3>
+                  <p className="card-subtitle">{course.module_count} modules · {course.lesson_count} lessons</p>
                 </div>
-                <div className="card-body">
-                  <p>{course.description?.substring(0, 100)}{course.description?.length > 100 ? '...' : ''}</p>
+                
+                {/* Embedded Stats Section */}
+                <div style={{ padding: '0 1.5rem', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      👥 <strong>{course.enrollment_count}</strong> enrollments
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      👁️ <strong>{course.views_count}</strong> views
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    <span>Progress:</span>
+                    <div style={{ flex: 1, height: '6px', backgroundColor: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div 
+                        style={{ 
+                          height: '100%', 
+                          backgroundColor: 'var(--primary)', 
+                          width: `${course.completion_percentage}%`,
+                          transition: 'width 0.3s ease'
+                        }} 
+                      />
+                    </div>
+                    <strong>{course.completion_percentage}%</strong>
+                  </div>
+                </div>
+
+                <div className="card-body" style={{ paddingTop: '0.5rem' }}>
                   {/* Status badges */}
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                     {parseFloat(course.price) === 0 ? (
                       <span className="badge badge-free">Free</span>
                     ) : (
@@ -171,7 +202,8 @@ export default function MyCoursesPage() {
                     )}
                   </div>
                 </div>
-                <div className="card-footer" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                
+                <div className="card-footer" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end', background: 'var(--background)' }}>
                   <button
                     className={`btn btn-sm ${course.is_published ? 'btn-secondary' : 'btn-success'}`}
                     onClick={() => handleTogglePublish(course)}

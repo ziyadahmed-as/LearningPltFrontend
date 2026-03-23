@@ -196,9 +196,14 @@ export default function MyCoursesPage() {
                       {course.is_published ? '📢 Published' : '📝 Draft'}
                     </span>
                     {course.is_published && (
-                      <span className={`badge ${course.is_approved ? 'badge-success' : 'badge-error'}`}>
-                        {course.is_approved ? '✅ Approved' : '⏳ Awaiting Approval'}
+                      <span className={`badge ${course.is_approved ? 'badge-success' : 'badge-error'}`} style={{ fontWeight: 700 }}>
+                        {course.is_approved ? '✅ Approved & Live' : '❌ Needs Review / Rejected'}
                       </span>
+                    )}
+                    {course.is_published && !course.is_approved && (
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', width: '100%' }}>
+                        ℹ️ This course is not visible to students until admin approves it.
+                      </p>
                     )}
                   </div>
                 </div>

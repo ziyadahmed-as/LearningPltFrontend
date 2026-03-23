@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   getUsers, updateUser, deleteUser, createUser,
   getCategories, createCategory, deleteCategory,
@@ -9,6 +10,7 @@ const TABS = ['Users', 'Categories', 'Course Approvals'];
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState('Users');
+  const navigate = useNavigate();
 
   return (
     <div>
@@ -249,6 +251,7 @@ function CourseApprovalsTab() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending'); // 'pending' | 'approved' | 'all'
+  const navigate = useNavigate();
 
   useEffect(() => { loadCourses(); }, []);
 
@@ -343,6 +346,9 @@ function CourseApprovalsTab() {
                 </td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <button className="btn btn-sm btn-info" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--primary)', color: 'var(--primary)' }} onClick={() => navigate(`/courses/${course.id}`)}>
+                      👁️ Preview
+                    </button>
                     {!course.is_approved ? (
                       <button className="btn btn-sm btn-success" onClick={() => handleApprove(course.id)}
                         disabled={!course.is_published} title={!course.is_published ? 'Instructor must publish first' : ''}>

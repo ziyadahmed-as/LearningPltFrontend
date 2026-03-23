@@ -59,6 +59,27 @@ export default function LessonViewPage() {
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
   if (!course || !lesson) return <div className="empty-state">Lesson not found</div>;
 
+  // Check if course is approved. If not, and student is viewing, show restricted message.
+  // We assume admins/instructors can still view for quality check.
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isElevated = user.role === 'ADMIN' || user.role === 'INSTRUCTOR';
+  
+  if (!course.is_approved && !isElevated) {
+    return (
+      <div className="empty-state" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+        <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>🛡️</h1>
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>Under Review</h2>
+        <p className="empty-state-text" style={{ fontSize: '1.1rem', color: 'var(--text-muted)', maxWidth: '500px', margin: '0 auto' }}>
+          This course is currently undergoing a quality review by our admin team. 
+          <strong> Please wait your cource back soon.</strong>
+        </p>
+        <button className="btn btn-primary" style={{ marginTop: '2rem' }} onClick={() => navigate('/learning')}>
+          Back to My Courses
+        </button>
+      </div>
+    );
+  }
+
   const getYoutubeEmbed = (url) => {
     if (!url) return null;
     let videoId = '';
@@ -118,8 +139,7 @@ export default function LessonViewPage() {
           </div>
         )}
 
-        <div className="lesson-text" style={{ whiteSpace: 'pre-wrap', marginBottom: 'var(--space-xl)', fontSize: '1.05rem', lineHeight: 1.8 }}>
-          {lesson.content}
+        <div className="lesson-text" style={{ marginBottom: 'var(--space-xl)', fontSize: '1.05rem', lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: lesson.content }}>
         </div>
 
         {/* Dynamic Content Blocks */}
@@ -143,8 +163,7 @@ export default function LessonViewPage() {
                 </div>
               ) : null}
 
-              <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '1.5rem' }}>
-                {block.content}
+              <div style={{ lineHeight: 1.8, color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '1.5rem' }} dangerouslySetInnerHTML={{ __html: block.content }}>
               </div>
 
               {block.image && (

@@ -7,24 +7,96 @@ import {
 } from '../services/api';
 
 function ContentBlockEditor({ block, onUpdate, onDelete }) {
-  const [data, setData] = useState({ title: block.title || '', content: block.content || '' });
+  const [data, setData] = useState({ title: block.title || '', content: block.content || '', video_url: block.video_url || '' });
+  const [image, setImage] = useState(null);
+  const [pdfFile, setPdfFile] = useState(null);
+  const [videoFile, setVideoFile] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await onUpdate(block.id, data);
+    const formData = new FormData();
+    formData.append('title', data.title);
+    formData.append('content', data.content);
+    if (image) formData.append('image', image);
+    if (pdfFile) formData.append('pdf_file', pdfFile);
+    if (videoFile) formData.append('video_file', videoFile);
+    formData.append('video_url', data.video_url || '');
+    
+    await onUpdate(block.id, formData);
     setSaving(false);
+    // Reset file inputs
+    setImage(null);
+    setPdfFile(null);
+    setVideoFile(null);
   };
 
   return (
-    <div className="card" style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+    <div className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: '12px' }}>
       <form onSubmit={handleSave}>
-        <input className="form-input" style={{ marginBottom: '0.75rem', fontWeight: 'bold' }} value={data.title} onChange={e => setData({...data, title: e.target.value})} placeholder="Sub-topic Title (optional)" />
-        <textarea className="form-textarea" style={{ marginBottom: '0.75rem', minHeight: '150px' }} value={data.content} onChange={e => setData({...data, content: e.target.value})} placeholder="Detailed content for this block..." required />
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button type="submit" className="btn btn-sm btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save Block'}</button>
-          <button type="button" className="btn btn-sm btn-secondary" onClick={() => onDelete(block.id)}>Delete Block</button>
+        <div className="form-group">
+          <input className="form-input" style={{ marginBottom: '0.75rem', fontWeight: 'bold' }} value={data.title} onChange={e => setData({...data, title: e.target.value})} placeholder="Sub-topic Title (optional)" />
+        </div>
+        <div className="form-group">
+          <textarea className="form-textarea" style={{ marginBottom: '1rem', minHeight: '120px' }} value={data.content} onChange={e => setData({...data, content: e.target.value})} placeholder="Detailed content for this block..." required />
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+          <div>
+            <label className="form-label" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              🖼️ Block Image
+            </label>
+            {block.image && (
+              <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
+                <img src={block.image} alt="" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '6px' }} />
+              </div>
+            )}
+            <input type="file" accept="image/*" onChange={e => setImage(e.target.files[0])} className="form-input" style={{ fontSize: '0.8rem' }} />
+          </div>
+          <div>
+            <label className="form-label" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              📄 Block PDF
+            </label>
+            {block.pdf_file && (
+              <div className="badge badge-info" style={{ marginBottom: '0.5rem', display: 'block', width: 'fit-content' }}>
+                📄 {block.pdf_file.split('/').pop().substring(0, 20)}...
+              </div>
+            )}
+            <input type="file" accept="application/pdf" onChange={e => setPdfFile(e.target.files[0])} className="form-input" style={{ fontSize: '0.8rem' }} />
+          </div>
+          
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label className="form-label" style={{ fontSize: '0.85rem' }}>📺 Block Video (YouTube URL or Upload)</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <input 
+                    className="form-input" 
+                    style={{ fontSize: '0.8rem' }}
+                    value={data.video_url || ''} 
+                    onChange={e => setData({...data, video_url: e.target.value})} 
+                    placeholder="Video URL (YouTube/Vimeo)" 
+                />
+                <input 
+                    type="file" 
+                    accept="video/*" 
+                    onChange={e => setVideoFile(e.target.files[0])} 
+                    className="form-input" 
+                    style={{ fontSize: '0.8rem' }} 
+                />
+            </div>
+            {(block.video_url || block.video_file) && (
+                <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-success)' }}>
+                    ✅ Video attached
+                </div>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button type="submit" className="btn btn-sm btn-primary" disabled={saving}>
+            {saving ? 'Saving...' : 'Save Block Changes'}
+          </button>
+          <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => onDelete(block.id)}>Delete Block</button>
         </div>
       </form>
     </div>

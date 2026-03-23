@@ -82,8 +82,22 @@ export const deleteLesson = (id) => API.delete(`/courses/lessons/${id}/`);
 export const markLessonCompleted = (id) => API.post(`/courses/lessons/${id}/mark_completed/`);
 
 // Content Blocks
-export const createContentBlock = (data) => API.post('/courses/content-blocks/', data);
-export const updateContentBlock = (id, data) => API.patch(`/courses/content-blocks/${id}/`, data);
+export const createContentBlock = (data) => {
+  if (data instanceof FormData) {
+    return API.post('/courses/content-blocks/', data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
+  return API.post('/courses/content-blocks/', data);
+};
+export const updateContentBlock = (id, data) => {
+  if (data instanceof FormData) {
+    return API.patch(`/courses/content-blocks/${id}/`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
+  return API.patch(`/courses/content-blocks/${id}/`, data);
+};
 export const deleteContentBlock = (id) => API.delete(`/courses/content-blocks/${id}/`);
 
 // Lesson Attachments

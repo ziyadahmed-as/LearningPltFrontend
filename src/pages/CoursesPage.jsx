@@ -9,7 +9,7 @@ export default function CoursesPage() {
   useEffect(() => {
     getCourses()
       .then(({ data }) => setCourses(Array.isArray(data) ? data : data.results || []))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 

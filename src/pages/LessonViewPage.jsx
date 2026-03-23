@@ -123,14 +123,52 @@ export default function LessonViewPage() {
         </div>
 
         {/* Dynamic Content Blocks */}
-        {lesson.content_blocks?.map((block) => (
-          <div key={block.id} className="content-block" style={{ marginBottom: 'var(--space-2xl)' }}>
-            {block.title && <h3 style={{ marginBottom: 'var(--space-sm)', fontSize: '1.2rem' }}>{block.title}</h3>}
-            <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, color: 'var(--text-secondary)' }}>
-              {block.content}
+        {lesson.content_blocks?.map((block) => {
+          const blockEmbedUrl = getYoutubeEmbed(block.video_url);
+          return (
+            <div key={block.id} className="content-block" style={{ marginBottom: 'var(--space-2xl)', background: 'var(--bg-elevated)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--border)' }}>
+              {block.title && <h3 style={{ marginBottom: 'var(--space-md)', fontSize: '1.3rem', fontWeight: 700 }}>{block.title}</h3>}
+              
+              {/* Block Video */}
+              {blockEmbedUrl ? (
+                <div className="video-container" style={{ marginBottom: '1.5rem' }}>
+                  <iframe src={blockEmbedUrl} title="Block Video" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                </div>
+              ) : block.video_file ? (
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <video controls style={{ width: '100%', borderRadius: '12px' }}>
+                        <source src={block.video_file} type="video/mp4" />
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+              ) : null}
+
+              <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '1.5rem' }}>
+                {block.content}
+              </div>
+
+              {block.image && (
+                <div style={{ margin: '1.5rem 0' }}>
+                  <img src={block.image} alt={block.title} style={{ width: '100%', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }} />
+                </div>
+              )}
+
+              {block.pdf_file && (
+                <div style={{ margin: '1.5rem 0' }}>
+                  <p style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '0.9rem' }}>📄 Supporting Document:</p>
+                  <div style={{ width: '100%', height: '500px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                    <embed src={block.pdf_file} type="application/pdf" width="100%" height="100%" />
+                  </div>
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <a href={block.pdf_file} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-secondary">
+                        Open PDF in New Tab
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {lesson.images?.length > 0 && (
           <div style={{ marginBottom: 'var(--space-2xl)', borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-xl)' }}>
@@ -149,11 +187,20 @@ export default function LessonViewPage() {
         {lesson.files?.length > 0 && (
           <div style={{ marginBottom: 'var(--space-2xl)', borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-xl)' }}>
             <h3 style={{ marginBottom: 'var(--space-md)' }}>Supporting Resources</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xl)' }}>
               {lesson.files.map(file => (
-                <a key={file.id} href={file.file} target="_blank" rel="noopener noreferrer" className="lesson-file-link">
-                  📁 {file.title}
-                </a>
+                <div key={file.id}>
+                    <p style={{ fontWeight: 600, marginBottom: '0.75rem' }}>📁 {file.title}</p>
+                    {file.file.toLowerCase().endsWith('.pdf') ? (
+                        <div style={{ width: '100%', height: '600px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                            <embed src={file.file} type="application/pdf" width="100%" height="100%" />
+                        </div>
+                    ) : (
+                        <a href={file.file} target="_blank" rel="noopener noreferrer" className="lesson-file-link">
+                           Download {file.title}
+                        </a>
+                    )}
+                </div>
               ))}
             </div>
           </div>

@@ -5,69 +5,8 @@ import {
   uploadLessonImage, uploadLessonFile,
   createContentBlock, updateContentBlock, deleteContentBlock
 } from '../services/api';
+import TiptapEditor from '../components/TiptapEditor';
 
-function RichTextToolbar({ onAction }) {
-  const btnStyle = {
-    padding: '4px 8px',
-    fontSize: '0.75rem',
-    background: 'var(--bg-card)',
-    border: '1px solid var(--border)',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    marginRight: '4px',
-    color: 'var(--text-primary)',
-    fontWeight: '600'
-  };
-
-  return (
-    <div style={{ marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-      <button type="button" style={btnStyle} onClick={() => onAction('h1')}>H1</button>
-      <button type="button" style={btnStyle} onClick={() => onAction('h2')}>H2</button>
-      <button type="button" style={btnStyle} onClick={() => onAction('bold')}><b>B</b></button>
-      <button type="button" style={btnStyle} onClick={() => onAction('list')}>• List</button>
-      <button type="button" style={btnStyle} onClick={() => onAction('br')}>↵ Line</button>
-    </div>
-  );
-}
-
-function RichTextArea({ value, onChange, placeholder, style = {} }) {
-  const insertText = (type) => {
-    const textarea = document.activeElement;
-    if (textarea.tagName !== 'TEXTAREA') return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selectedText = text.substring(start, end);
-    let before = text.substring(0, start);
-    let after = text.substring(end);
-    let replacement = '';
-
-    switch (type) {
-      case 'h1': replacement = `\n<h1>${selectedText || 'Heading 1'}</h1>\n`; break;
-      case 'h2': replacement = `\n<h2>${selectedText || 'Heading 2'}</h2>\n`; break;
-      case 'bold': replacement = `<b>${selectedText || 'bold text'}</b>`; break;
-      case 'list': replacement = `\n<ul>\n  <li>${selectedText || 'Item'}</li>\n</ul>\n`; break;
-      case 'br': replacement = `<br/>\n`; break;
-      default: return;
-    }
-
-    onChange(before + replacement + after);
-  };
-
-  return (
-    <div>
-      <RichTextToolbar onAction={insertText} />
-      <textarea
-        className="form-textarea"
-        style={{ ...style }}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-      />
-    </div>
-  );
-}
 
 function ContentBlockEditor({ block, onUpdate, onDelete }) {
   const [data, setData] = useState({ title: block.title || '', content: block.content || '', video_url: block.video_url || '' });
@@ -102,12 +41,11 @@ function ContentBlockEditor({ block, onUpdate, onDelete }) {
           <input className="form-input" style={{ marginBottom: '0.75rem', fontWeight: 'bold' }} value={data.title} onChange={e => setData({ ...data, title: e.target.value })} placeholder="Sub-topic Title (optional)" />
         </div>
         <div className="form-group">
-          <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Description with Formatting</label>
-          <RichTextArea
-            style={{ marginBottom: '1rem', minHeight: '150px' }}
+          <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Rich Content (Word-like Editor)</label>
+          <TiptapEditor
             value={data.content}
             onChange={val => setData({ ...data, content: val })}
-            placeholder="Detailed content for this block... Use buttons above for styling."
+            placeholder="Detailed content for this block..."
           />
         </div>
 
@@ -287,9 +225,8 @@ export default function LessonEditorPage() {
               <input className="form-input" value={formData.video_url} onChange={e => setFormData({ ...formData, video_url: e.target.value })} placeholder="https://..." />
             </div>
             <div className="form-group">
-              <label className="form-label">Detailed Description / Content (Supports HTML formatting)</label>
-              <RichTextArea
-                style={{ minHeight: '350px' }}
+              <label className="form-label">Detailed Lesson Content (Supports Microsoft Word–like formatting)</label>
+              <TiptapEditor
                 value={formData.content}
                 onChange={val => setFormData({ ...formData, content: val })}
                 placeholder="Write your lesson content here..."

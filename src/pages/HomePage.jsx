@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ChatWidget from '../components/ChatWidget';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ export default function HomePage() {
           <Link to="/my-courses" className="btn btn-secondary">Manage Your Courses</Link>
         )}
       </div>
+      <ChatWidget />
     </div>
   );
 }

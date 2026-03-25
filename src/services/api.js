@@ -120,4 +120,7 @@ export const createUser = (data) => API.post('/users/manage/', data);
 export const updateUser = (id, data) => API.patch(`/users/manage/${id}/`, data);
 export const deleteUser = (id) => API.delete(`/users/manage/${id}/`);
 
+// AI Services
+export const generateCourseDescription = (data) => API.post('/ai/generate-description/', data);
+
 export default API;

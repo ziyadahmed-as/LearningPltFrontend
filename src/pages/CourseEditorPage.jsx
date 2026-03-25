@@ -4,7 +4,7 @@ import {
   getCourse, updateCourse,
   createChapter, deleteChapter,
   createLesson, deleteLesson,
-  getCategories
+  getCategories, generateCourseDescription
 } from '../services/api';
 
 export default function CourseEditorPage() {
@@ -16,6 +16,7 @@ export default function CourseEditorPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState({ title: '', description: '', price: '0', category: '', is_published: false });
   const [saving, setSaving] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
 
   useEffect(() => { loadCourse(); loadCategories(); }, [id]);
 
@@ -47,6 +48,26 @@ export default function CourseEditorPage() {
       setShowSettings(false);
     } catch { alert('Failed to update course settings'); }
     finally { setSaving(false); }
+  };
+
+  const handleGenerateDescription = async () => {
+    if (!settings.title) {
+      alert('Please enter a course title first so AI can generate a relevant description.');
+      return;
+    }
+    setGeneratingAI(true);
+    try {
+      const { data } = await generateCourseDescription({
+        title: settings.title,
+        // Optional: Could add inputs for audience/keywords if needed
+      });
+      setSettings({ ...settings, description: data.description });
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate description. Make sure the backend has an OpenAI API key.');
+    } finally {
+      setGeneratingAI(false);
+    }
   };
 
   const handleTogglePublish = async () => {
@@ -139,10 +160,21 @@ export default function CourseEditorPage() {
                 onChange={e => setSettings({ ...settings, title: e.target.value })} required />
             </div>
             <div className="form-group">
-              <label className="form-label">Description</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <label className="form-label" style={{ marginBottom: 0 }}>Description</label>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary"
+                  onClick={handleGenerateDescription}
+                  disabled={generatingAI}
+                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none' }}
+                >
+                  {generatingAI ? '✨ Generating...' : '✨ AI Assist'}
+                </button>
+              </div>
               <textarea className="form-textarea" value={settings.description}
                 onChange={e => setSettings({ ...settings, description: e.target.value })} required
-                style={{ minHeight: '100px' }} />
+                style={{ minHeight: '150px' }} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className="form-group">

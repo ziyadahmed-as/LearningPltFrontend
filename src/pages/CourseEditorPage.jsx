@@ -36,7 +36,7 @@ export default function CourseEditorPage() {
   };
 
   const loadCategories = async () => {
-    try { const { data } = await getCategories(); setCategories(Array.isArray(data) ? data : data.results || []); } catch {}
+    try { const { data } = await getCategories(); setCategories(Array.isArray(data) ? data : data.results || []); } catch { }
   };
 
   const handleSaveSettings = async (e) => {
@@ -221,9 +221,9 @@ export default function CourseEditorPage() {
                   <button className="btn btn-sm btn-secondary" onClick={() => handleDeleteChapter(chapter.id)}>Delete Chapter</button>
                 </div>
               </div>
-              
+
               {chapter.lessons?.length === 0 ? (
-                 <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.9rem' }}>No lessons in this chapter yet.</p>
+                <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.9rem' }}>No lessons in this chapter yet.</p>
               ) : (
                 <div className="editor-lessons-list">
                   {chapter.lessons.map((lesson, li) => (

@@ -975,13 +975,13 @@ tr:hover td {
 }
 
 .admin-sidebar {
-  width: 250px;
+  width: 230px;
   background: var(--bg-card);
   border-right: 1px solid var(--border-subtle);
-  padding: var(--space-xl) var(--space-sm);
+  padding: var(--space-lg) var(--space-xs);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
   position: sticky;
   top: 64px;
   height: calc(100vh - 64px);
@@ -1024,25 +1024,25 @@ tr:hover td {
 
 .admin-main-content {
   flex: 1;
-  padding: var(--space-2xl);
+  padding: var(--space-lg) var(--space-xl);
   overflow-y: auto;
 }
 
 .stats-grid-modern {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-lg);
-  margin-bottom: var(--space-2xl);
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
 }
 
 .stat-card-modern {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
   display: flex;
   align-items: center;
-  gap: var(--space-lg);
+  gap: var(--space-md);
   transition: var(--transition-normal);
 }
 
@@ -1053,9 +1053,9 @@ tr:hover td {
 }
 
 .stat-icon-wrapper {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1069,10 +1069,10 @@ tr:hover td {
 }
 
 .stat-value-modern {
-  font-size: 1.4rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--text-primary);
-  line-height: 1.2;
+  line-height: 1.1;
 }
 
 .stat-label-modern {

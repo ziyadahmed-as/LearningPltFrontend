@@ -51,9 +51,36 @@ export default function AdminDashboardPage() {
 
       {/* Main Content Area */}
       <main className="admin-main-content">
-        <header style={{ marginBottom: '2rem' }}>
-          <h1 className="page-title">{MENU_ITEMS.find(i => i.id === activeItem)?.label}</h1>
-          <p className="page-subtitle">Welcome back, Administrator. System status is stable.</p>
+        <header style={{ 
+          marginBottom: '1.5rem', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'flex-end',
+          borderBottom: '1px solid var(--border-subtle)',
+          paddingBottom: '1rem'
+        }}>
+          <div>
+            <h1 className="page-title" style={{ fontSize: '1.5rem', marginBottom: '0' }}>
+              {MENU_ITEMS.find(i => i.id === activeItem)?.label}
+            </h1>
+            <p className="page-subtitle" style={{ fontSize: '0.8rem' }}>Welcome back, Administrator.</p>
+          </div>
+          
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem', 
+            background: 'var(--success-bg)', 
+            padding: '0.4rem 0.8rem', 
+            borderRadius: 'var(--radius-full)',
+            border: '1px solid var(--success-border)',
+            fontSize: '0.75rem',
+            color: 'var(--success)',
+            fontWeight: 600
+          }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }}></div>
+            System status: Stable
+          </div>
         </header>
 
         {activeItem === 'Overview' && <OverviewTab />}
@@ -132,13 +159,13 @@ function OverviewTab() {
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
         {/* Course Status Chart */}
         <div className="chart-card">
           <div className="chart-header">
             <h3 className="chart-title">Course Ecosystem</h3>
           </div>
-          <div style={{ height: '300px' }}>
+          <div style={{ height: '220px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={courseData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
@@ -162,7 +189,7 @@ function OverviewTab() {
           <div className="chart-header">
             <h3 className="chart-title">Activity Metrics</h3>
           </div>
-          <div style={{ height: '300px' }}>
+          <div style={{ height: '220px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={enrollmentData}>
                 <defs>
@@ -190,15 +217,17 @@ function OverviewTab() {
 function StatCard({ icon: Icon, label, value, trend, variant = 'primary' }) {
   return (
     <div className="stat-card-modern">
-      <div className="stat-icon-wrapper">
-        <Icon size={20} />
+      <div className="stat-icon-wrapper" style={{ flexShrink: 0 }}>
+        <Icon size={18} />
       </div>
-      <div className="stat-info">
-        <span className="stat-label-modern">{label}</span>
-        <span className="stat-value-modern">{value}</span>
-        <span style={{ fontSize: '0.65rem', color: variant === 'warning' ? 'var(--warning)' : 'var(--text-muted)', marginTop: '0.2rem' }}>
-          {trend}
-        </span>
+      <div className="stat-info" style={{ overflow: 'hidden' }}>
+        <span className="stat-label-modern" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+          <span className="stat-value-modern">{value}</span>
+          <span style={{ fontSize: '0.6rem', color: variant === 'warning' ? 'var(--warning)' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+            {trend.split(' ').slice(0, 2).join(' ')}
+          </span>
+        </div>
       </div>
     </div>
   );

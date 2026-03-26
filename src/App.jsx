@@ -14,6 +14,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import CourseEditorPage from './pages/CourseEditorPage';
 import LessonEditorPage from './pages/LessonEditorPage';
 import LessonViewPage from './pages/LessonViewPage';
+import InstructorRevenuePage from './pages/InstructorRevenuePage';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -42,6 +43,10 @@ function AppRoutes() {
       <Route
         path="/my-courses"
         element={<ProtectedRoute allowedRoles={['INSTRUCTOR']}><MyCoursesPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/revenue"
+        element={<ProtectedRoute allowedRoles={['INSTRUCTOR']}><InstructorRevenuePage /></ProtectedRoute>}
       />
       <Route
         path="/admin"

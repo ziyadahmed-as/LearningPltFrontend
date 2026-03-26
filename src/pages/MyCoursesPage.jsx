@@ -167,6 +167,9 @@ export default function MyCoursesPage() {
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       👁️ <strong>{course.views_count}</strong> views
                     </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      ⭐ <strong>{course.average_rating || 'NR'}</strong>
+                    </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                     <span>Progress:</span>

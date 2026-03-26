@@ -52,8 +52,16 @@ export const updateMe = (data) => API.patch('/users/me/', data);
 export const getCourses = () => API.get('/courses/courses/');
 export const getCourse = (id) => API.get(`/courses/courses/${id}/`);
 export const createCourse = (data) => API.post('/courses/courses/', data);
-export const updateCourse = (id, data) => API.patch(`/courses/courses/${id}/`, data);
+export const updateCourse = (id, data) => {
+  if (data instanceof FormData) {
+    return API.patch(`/courses/courses/${id}//`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
+  return API.patch(`/courses/courses/${id}/`, data);
+};
 export const deleteCourse = (id) => API.delete(`/courses/courses/${id}/`);
+export const submitCourseForApproval = (id) => API.post(`/courses/courses/${id}/submit_for_approval/`);
 export const approveCourse = (id) => API.post(`/courses/courses/${id}/approve/`);
 export const unapproveCourse = (id) => API.post(`/courses/courses/${id}/unapprove/`);
 export const getInstructorStats = () => API.get('/courses/courses/instructor_stats/');
@@ -107,12 +115,23 @@ export const uploadLessonImage = (data) => API.post('/courses/lesson-images/', d
 export const uploadLessonFile = (data) => API.post('/courses/lesson-files/', data, {
   headers: { 'Content-Type': 'multipart/form-data' }
 });
+export const createLessonLink = (data) => API.post('/courses/lesson-links/', data);
+export const deleteLessonLink = (id) => API.delete(`/courses/lesson-links/${id}/`);
 
 // Enrollment
 export const enrollCourse = (courseId) => API.post(`/courses/courses/${courseId}/enroll/`);
 export const getMyEnrollments = () => API.get('/courses/enrollments/');
 export const createCheckoutSession = (enrollmentId) =>
   API.post(`/courses/enrollments/${enrollmentId}/create_checkout_session/`);
+
+// Reviews
+export const getReviews = (params) => API.get('/courses/reviews/', { params });
+export const createReview = (data) => API.post('/courses/reviews/', data);
+
+// Wallet & Earnigs
+export const getWallet = () => API.get('/courses/wallets/');
+export const getWithdrawalRequests = () => API.get('/courses/withdrawal-requests/');
+export const createWithdrawalRequest = (data) => API.post('/courses/withdrawal-requests/', data);
 
 // Admin
 export const getUsers = () => API.get('/users/manage/');

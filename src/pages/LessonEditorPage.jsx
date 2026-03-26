@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   getLesson, updateLesson,
   uploadLessonImage, uploadLessonFile,
+  createLessonLink, deleteLessonLink,
   createContentBlock, updateContentBlock, deleteContentBlock
 } from '../services/api';
 import TiptapEditor from '../components/TiptapEditor';
@@ -200,6 +201,41 @@ export default function LessonEditorPage() {
     }
   };
 
+  const handleMoveBlock = async (index, direction) => {
+    const blocks = [...lesson.content_blocks];
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= blocks.length) return;
+
+    const current = blocks[index];
+    const target = blocks[targetIndex];
+
+    try {
+      await Promise.all([
+        updateContentBlock(current.id, { order: target.order }),
+        updateContentBlock(target.id, { order: current.order })
+      ]);
+      loadLesson();
+    } catch { alert('Failed to reorder blocks'); }
+  };
+
+  const handleAddLink = async () => {
+    const title = prompt('Link Title:');
+    if (!title) return;
+    const url = prompt('URL:');
+    if (!url) return;
+    try {
+      await createLessonLink({ lesson: id, title, url });
+      loadLesson();
+    } catch { alert('Failed to add link'); }
+  };
+
+  const handleDeleteLink = async (linkId) => {
+    if (window.confirm('Delete this link?')) {
+      await deleteLessonLink(linkId);
+      loadLesson();
+    }
+  };
+
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
   if (!lesson) return <div className="empty-state">Lesson not found</div>;
 
@@ -252,7 +288,13 @@ export default function LessonEditorPage() {
             <div>
               {lesson.content_blocks?.map((block, idx) => (
                 <div key={block.id}>
-                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Block {idx + 1}</h4>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <h4 style={{ margin: 0, color: 'var(--text-muted)' }}>Block {idx + 1}</h4>
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <button className="btn btn-sm btn-secondary" onClick={() => handleMoveBlock(idx, -1)} disabled={idx === 0}>↑</button>
+                      <button className="btn btn-sm btn-secondary" onClick={() => handleMoveBlock(idx, 1)} disabled={idx === lesson.content_blocks.length - 1}>↓</button>
+                    </div>
+                  </div>
                   <ContentBlockEditor block={block} onUpdate={handleUpdateBlock} onDelete={handleDeleteBlock} />
                 </div>
               ))}
@@ -288,6 +330,23 @@ export default function LessonEditorPage() {
                 + Upload PDF
                 <input type="file" accept="application/pdf" onChange={handleUploadFile} style={{ display: 'none' }} />
               </label>
+            </div>
+          </div>
+
+          <div className="auth-card" style={{ padding: 'var(--space-lg)' }}>
+            <h3 style={{ fontSize: '0.9rem', marginBottom: 'var(--space-md)' }}>Supplementary Links</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+              {lesson.links?.map(link => (
+                <div key={link.id} className="badge badge-info" style={{ justifyContent: 'space-between', padding: '0.5rem', display: 'flex', alignItems: 'center' }}>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                    🔗 {link.title.substring(0, 20)}...
+                  </a>
+                  <button onClick={() => handleDeleteLink(link.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: '0.5rem' }}>❌</button>
+                </div>
+              ))}
+              <button className="btn btn-sm btn-secondary btn-block" onClick={handleAddLink}>
+                + Add Link
+              </button>
             </div>
           </div>
         </div>

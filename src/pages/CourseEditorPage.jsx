@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  getCourse, updateCourse,
-  createChapter, deleteChapter,
-  createLesson, deleteLesson,
-  getCategories, generateCourseDescription
+  createChapter, deleteChapter, updateChapter,
+  createLesson, deleteLesson, updateLesson,
+  getCategories, generateCourseDescription,
+  submitCourseForApproval
 } from '../services/api';
 
 export default function CourseEditorPage() {
@@ -17,6 +17,8 @@ export default function CourseEditorPage() {
   const [settings, setSettings] = useState({ title: '', description: '', price: '0', category: '', is_published: false });
   const [saving, setSaving] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
+  const [thumbnail, setThumbnail] = useState(null);
+  const [promoVideo, setPromoVideo] = useState(null);
 
   useEffect(() => { loadCourse(); loadCategories(); }, [id]);
 
@@ -42,12 +44,35 @@ export default function CourseEditorPage() {
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     setSaving(true);
+    const formData = new FormData();
+    formData.append('title', settings.title);
+    formData.append('description', settings.description);
+    formData.append('price', parseFloat(settings.price));
+    formData.append('category', settings.category);
+    if (thumbnail) formData.append('thumbnail', thumbnail);
+    if (promoVideo) formData.append('promo_video', promoVideo);
+
     try {
-      await updateCourse(id, { ...settings, price: parseFloat(settings.price) });
+      await updateCourse(id, formData);
       loadCourse();
       setShowSettings(false);
+      setThumbnail(null);
+      setPromoVideo(null);
     } catch { alert('Failed to update course settings'); }
     finally { setSaving(false); }
+  };
+
+  const handleSubmitForApproval = async () => {
+    if (!course.is_published) {
+      alert('You must publish the course as a draft before submitting for approval.');
+      return;
+    }
+    if (window.confirm('Submit this course for admin approval? You won\'t be able to make major changes until it\'s reviewed.')) {
+      try {
+        await submitCourseForApproval(id);
+        loadCourse();
+      } catch { alert('Failed to submit course for approval'); }
+    }
   };
 
   const handleGenerateDescription = async () => {
@@ -111,6 +136,42 @@ export default function CourseEditorPage() {
     }
   };
 
+  const handleMoveChapter = async (index, direction) => {
+    const chapters = [...course.chapters];
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= chapters.length) return;
+
+    // Swap orders
+    const current = chapters[index];
+    const target = chapters[targetIndex];
+    
+    try {
+      await Promise.all([
+        updateChapter(current.id, { order: target.order }),
+        updateChapter(target.id, { order: current.order })
+      ]);
+      loadCourse();
+    } catch { alert('Failed to reorder chapters'); }
+  };
+
+  const handleMoveLesson = async (chapterId, index, direction) => {
+    const chapter = course.chapters.find(c => c.id === chapterId);
+    const lessons = [...chapter.lessons];
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= lessons.length) return;
+
+    const current = lessons[index];
+    const target = lessons[targetIndex];
+
+    try {
+      await Promise.all([
+        updateLesson(current.id, { order: target.order }),
+        updateLesson(target.id, { order: current.order })
+      ]);
+      loadCourse();
+    } catch { alert('Failed to reorder lessons'); }
+  };
+
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
   if (!course) return <div className="empty-state"><p className="empty-state-text">Course not found</p></div>;
 
@@ -128,8 +189,8 @@ export default function CourseEditorPage() {
               {course.is_published ? '📢 Published' : '📝 Draft'}
             </span>
             {course.is_published && (
-              <span className={`badge ${course.is_approved ? 'badge-success' : 'badge-error'}`}>
-                {course.is_approved ? '✅ Approved' : '⏳ Awaiting Approval'}
+              <span className={`badge ${course.is_approved ? 'badge-success' : (course.is_submitted ? 'badge-info' : 'badge-error')}`}>
+                {course.is_approved ? '✅ Approved' : (course.is_submitted ? '⏳ Pending Approval' : '🛠️ Not Submitted')}
               </span>
             )}
             <span className="badge badge-info">{lessonCount} lessons</span>
@@ -143,8 +204,13 @@ export default function CourseEditorPage() {
             className={`btn ${course.is_published ? 'btn-secondary' : 'btn-success'}`}
             onClick={handleTogglePublish}
           >
-            {course.is_published ? 'Unpublish' : '🚀 Publish'}
+            {course.is_published ? 'Unpublish' : '🚀 Publish as Draft'}
           </button>
+          {!course.is_approved && course.is_published && !course.is_submitted && (
+            <button className="btn btn-primary" onClick={handleSubmitForApproval}>
+              📤 Submit for Approval
+            </button>
+          )}
           <button className="btn btn-secondary" onClick={() => navigate('/my-courses')}>← Back</button>
         </div>
       </div>
@@ -176,24 +242,18 @@ export default function CourseEditorPage() {
                 onChange={e => setSettings({ ...settings, description: e.target.value })} required
                 style={{ minHeight: '150px' }} />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <div className="form-group">
-                <label className="form-label">Price (USD)</label>
-                <input className="form-input" type="number" step="0.01" value={settings.price}
-                  onChange={e => setSettings({ ...settings, price: e.target.value })} />
+                <label className="form-label">Course Thumbnail</label>
+                <input type="file" className="form-input" accept="image/*" onChange={e => setThumbnail(e.target.files[0])} />
+                {course.thumbnail && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Current: {course.thumbnail.split('/').pop()}</p>}
               </div>
               <div className="form-group">
-                <label className="form-label">Category</label>
-                <select className="form-select" value={settings.category}
-                  onChange={e => setSettings({ ...settings, category: e.target.value })}>
-                  <option value="">Select category</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                <label className="form-label">Promotional Video</label>
+                <input type="file" className="form-input" accept="video/*" onChange={e => setPromoVideo(e.target.files[0])} />
+                {course.promo_video && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Current: {course.promo_video.split('/').pop()}</p>}
               </div>
             </div>
-            <button className="btn btn-primary" type="submit" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Settings'}
-            </button>
           </form>
         </div>
       )}
@@ -217,6 +277,8 @@ export default function CourseEditorPage() {
                   <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Chapter {ci + 1}:</span> {chapter.title}
                 </h3>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-sm btn-secondary" onClick={() => handleMoveChapter(ci, -1)} disabled={ci === 0}>↑</button>
+                  <button className="btn btn-sm btn-secondary" onClick={() => handleMoveChapter(ci, 1)} disabled={ci === course.chapters.length - 1}>↓</button>
                   <button className="btn btn-sm btn-primary" onClick={() => handleAddLesson(chapter.id)}>+ Add Lesson</button>
                   <button className="btn btn-sm btn-secondary" onClick={() => handleDeleteChapter(chapter.id)}>Delete Chapter</button>
                 </div>
@@ -239,6 +301,8 @@ export default function CourseEditorPage() {
                         <span style={{ fontWeight: 500 }}>{lesson.title}</span>
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className="btn btn-sm btn-secondary" onClick={() => handleMoveLesson(chapter.id, li, -1)} disabled={li === 0}>↑</button>
+                        <button className="btn btn-sm btn-secondary" onClick={() => handleMoveLesson(chapter.id, li, 1)} disabled={li === chapter.lessons.length - 1}>↓</button>
                         <button className="btn btn-sm btn-primary" onClick={() => navigate(`/editor/lessons/${lesson.id}`)}>Edit Content</button>
                         <button className="btn btn-sm btn-secondary" onClick={() => handleDeleteLesson(lesson.id)}>Remove</button>
                       </div>

@@ -225,6 +225,23 @@ export default function LessonViewPage() {
           </div>
         )}
 
+        {lesson.links?.length > 0 && (
+          <div style={{ marginBottom: 'var(--space-2xl)', borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-xl)' }}>
+            <h3 style={{ marginBottom: 'var(--space-md)' }}>Supplementary Links</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+              {lesson.links.map(link => (
+                <div key={link.id} className="badge badge-info" style={{ justifyContent: 'flex-start', padding: '0.8rem', display: 'flex', alignItems: 'center' }}>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span>🔗</span>
+                    <span style={{ fontWeight: 600 }}>{link.title}</span>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>({new URL(link.url).hostname})</span>
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-2xl)', display: 'flex', justifyContent: 'center' }}>
           {!lesson.is_completed ? (
             <button className="btn btn-success btn-block" style={{ maxWidth: '400px', padding: '1rem' }} onClick={handleComplete} disabled={completing}>

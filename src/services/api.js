@@ -109,6 +109,18 @@ export const updateContentBlock = (id, data) => {
 export const deleteContentBlock = (id) => API.delete(`/courses/content-blocks/${id}/`);
 
 
+// Lesson Attachments
+export const uploadLessonImage = (data) => API.post('/courses/lesson-images/', data, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const uploadLessonFile = (data) => API.post('/courses/lesson-files/', data, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+
+// Lesson Links
+export const createLessonLink = (data) => API.post('/courses/lesson-links/', data);
+export const deleteLessonLink = (id) => API.delete(`/courses/lesson-links/${id}/`);
+
 // Enrollment
 export const enrollCourse = (courseId) => API.post(`/courses/courses/${courseId}/enroll/`);
 export const getMyEnrollments = () => API.get('/courses/enrollments/');

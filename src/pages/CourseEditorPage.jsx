@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
+  getCourse,
   createChapter, deleteChapter, updateChapter,
   createLesson, deleteLesson, updateLesson,
   getCategories, generateCourseDescription,
-  submitCourseForApproval
+  submitCourseForApproval, updateCourse
 } from '../services/api';
 
 export default function CourseEditorPage() {
@@ -253,6 +254,12 @@ export default function CourseEditorPage() {
                 <input type="file" className="form-input" accept="video/*" onChange={e => setPromoVideo(e.target.files[0])} />
                 {course.promo_video && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Current: {course.promo_video.split('/').pop()}</p>}
               </div>
+            </div>
+            <div style={{ marginTop: 'var(--space-xl)', display: 'flex', gap: 'var(--space-md)' }}>
+              <button className="btn btn-primary" type="submit" disabled={saving}>
+                {saving ? 'Saving...' : '💾 Save Course Settings'}
+              </button>
+              <button className="btn btn-secondary" type="button" onClick={() => setShowSettings(false)}>Cancel</button>
             </div>
           </form>
         </div>

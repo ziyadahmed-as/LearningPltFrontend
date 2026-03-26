@@ -32,10 +32,11 @@ export default function MyCoursesPage() {
     e.preventDefault();
     setError('');
     try {
-      await createCourse({ ...form, price: parseFloat(form.price) });
+      const { data } = await createCourse({ ...form, price: parseFloat(form.price) });
       setShowForm(false);
       setForm({ title: '', slug: '', description: '', price: '0.00', category: '', is_published: false });
-      loadData();
+      // Redirect to course editor to add content immediately
+      navigate(`/editor/courses/${data.id}`);
     } catch (err) {
       const data = err.response?.data;
       if (data) {

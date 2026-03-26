@@ -30,19 +30,35 @@ export default function AdminDashboardPage() {
   return (
     <div className="admin-layout">
       {/* Sidebar */}
-      <aside className="admin-sidebar">
-        <div style={{ padding: '0 1rem 1.5rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>Admin Central</h2>
-          <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Management Console</p>
+      <aside className="admin-sidebar" style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-subtle)' }}>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1.5rem', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--accent-primary)', letterSpacing: '-0.03em' }}>Fatra <span style={{ color: 'var(--text-primary)' }}>OS</span></h2>
+          <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.2rem' }}>Administration Suite</p>
         </div>
-        <nav>
+        <nav style={{ padding: '0 0.75rem' }}>
           {MENU_ITEMS.map(item => (
             <button
               key={item.id}
               onClick={() => setActiveItem(item.id)}
               className={`admin-sidebar-item ${activeItem === item.id ? 'active' : ''}`}
+              style={{ 
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.75rem', 
+                padding: '0.85rem 1rem', 
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '0.25rem',
+                border: 'none',
+                background: activeItem === item.id ? 'var(--accent-primary)' : 'transparent',
+                color: activeItem === item.id ? 'white' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                transition: 'var(--transition-normal)',
+                fontWeight: 600,
+                fontSize: '0.9rem'
+              }}
             >
-              <item.icon />
+              <item.icon size={18} />
               <span>{item.label}</span>
             </button>
           ))}

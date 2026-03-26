@@ -9,9 +9,12 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <Link to="/" className="navbar-brand">LearnPlatform</Link>
+        <Link to="/" className="navbar-brand">
+          <span style={{ color: 'var(--accent-primary)' }}>Fatra</span> Academy
+        </Link>
         <div className="navbar-links">
           <Link to="/courses">Courses</Link>
+          <Link to="/#live">Live Classes</Link>
           {user ? (
             <>
               {user.role === 'STUDENT' && <Link to="/my-enrollments">My Enrollments</Link>}

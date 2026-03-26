@@ -54,7 +54,7 @@ export const getCourse = (id) => API.get(`/courses/courses/${id}/`);
 export const createCourse = (data) => API.post('/courses/courses/', data);
 export const updateCourse = (id, data) => {
   if (data instanceof FormData) {
-    return API.patch(`/courses/courses/${id}//`, data, {
+    return API.patch(`/courses/courses/${id}/`, data, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   }
@@ -108,15 +108,6 @@ export const updateContentBlock = (id, data) => {
 };
 export const deleteContentBlock = (id) => API.delete(`/courses/content-blocks/${id}/`);
 
-// Lesson Attachments
-export const uploadLessonImage = (data) => API.post('/courses/lesson-images/', data, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-});
-export const uploadLessonFile = (data) => API.post('/courses/lesson-files/', data, {
-  headers: { 'Content-Type': 'multipart/form-data' }
-});
-export const createLessonLink = (data) => API.post('/courses/lesson-links/', data);
-export const deleteLessonLink = (id) => API.delete(`/courses/lesson-links/${id}/`);
 
 // Enrollment
 export const enrollCourse = (courseId) => API.post(`/courses/courses/${courseId}/enroll/`);

@@ -91,8 +91,6 @@ export default function LessonViewPage() {
     return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
   };
 
-  const embedUrl = getYoutubeEmbed(lesson.video_url);
-
   return (
     <div className="lesson-content-layout">
       {/* Sidebar */}
@@ -105,7 +103,6 @@ export default function LessonViewPage() {
                 Chapter {ci + 1}: {chapter.title}
               </div>
               {chapter.lessons?.map((l, li) => {
-                // Flatten all lessons to check sequential locking
                 const allLessons = course.chapters.flatMap(c => c.lessons || []);
                 const globalIdx = allLessons.findIndex(lesson => lesson.id === l.id);
                 const isLocked = globalIdx > 0 && !allLessons[globalIdx - 1].is_completed;
@@ -130,126 +127,95 @@ export default function LessonViewPage() {
 
       {/* Main Content */}
       <main className="lesson-main">
-        <h1 className="page-title">{lesson.title}</h1>
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 className="page-title" style={{ marginBottom: '0.5rem' }}>{lesson.title}</h1>
+          {lesson.description && (
+             <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', fontStyle: 'italic' }}>{lesson.description}</p>
+          )}
+        </div>
+        
         {msg && <div className={`alert ${msg.startsWith('Error') ? 'alert-error' : 'alert-success'}`}>{msg}</div>}
 
-        {embedUrl && (
-          <div className="video-container">
-            <iframe src={embedUrl} title="Video" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-          </div>
-        )}
+        <div className="lesson-blocks">
+          {lesson.content_blocks?.length === 0 ? (
+            <div className="empty-state" style={{ padding: '2rem' }}>
+              <p className="empty-state-text">No content available for this lesson yet.</p>
+            </div>
+          ) : (
+            lesson.content_blocks.map((block) => (
+              <div key={block.id} className="content-block" style={{ marginBottom: '2.5rem' }}>
+                {block.title && <h3 style={{ marginBottom: '1rem', fontSize: '1.4rem', fontWeight: 600 }}>{block.title}</h3>}
+                
+                {block.type === 'text' && (
+                  <div className="lesson-text" style={{ fontSize: '1.05rem', lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: block.text_content }}></div>
+                )}
 
-        <div className="lesson-text" style={{ marginBottom: 'var(--space-xl)', fontSize: '1.05rem', lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: lesson.content }}>
+                {block.type === 'image' && block.file && (
+                   <div style={{ margin: '1.5rem 0' }}>
+                      <img src={block.file} alt={block.title} style={{ width: '100%', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
+                   </div>
+                )}
+
+                {block.type === 'pdf' && block.file && (
+                   <div style={{ margin: '1.5rem 0' }}>
+                      <div style={{ width: '100%', height: '600px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                        <embed src={block.file} type="application/pdf" width="100%" height="100%" />
+                      </div>
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <a href={block.file} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-primary">
+                            Open PDF in New Tab
+                        </a>
+                      </div>
+                   </div>
+                )}
+
+                {block.type === 'video_upload' && block.file && (
+                   <div style={{ margin: '1.5rem 0' }}>
+                      <video controls style={{ width: '100%', borderRadius: '12px', background: '#000' }}>
+                        <source src={block.file} type="video/mp4" />
+                        Your browser does not support the video tag.
+                      </video>
+                   </div>
+                )}
+
+                {block.type === 'video_link' && block.url && (
+                   <div style={{ margin: '1.5rem 0' }}>
+                      <div className="video-container">
+                        <iframe 
+                          src={getYoutubeEmbed(block.url)} 
+                          title="Block Video" 
+                          frameBorder="0" 
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                          allowFullScreen
+                        ></iframe>
+                      </div>
+                   </div>
+                )}
+
+                {block.type === 'link' && block.url && (
+                   <div className="badge badge-info" style={{ justifyContent: 'flex-start', padding: '1rem', display: 'flex', alignItems: 'center', margin: '1rem 0' }}>
+                      <a href={block.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ fontSize: '1.2rem' }}>🔗</span>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 600 }}>{block.title || 'External Link'}</span>
+                          <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{new URL(block.url).hostname}</span>
+                        </div>
+                      </a>
+                   </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
 
-        {/* Dynamic Content Blocks */}
-        {lesson.content_blocks?.map((block) => {
-          const blockEmbedUrl = getYoutubeEmbed(block.video_url);
-          return (
-            <div key={block.id} className="content-block" style={{ marginBottom: 'var(--space-2xl)', background: 'var(--bg-elevated)', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--border)' }}>
-              {block.title && <h3 style={{ marginBottom: 'var(--space-md)', fontSize: '1.3rem', fontWeight: 700 }}>{block.title}</h3>}
-              
-              {/* Block Video */}
-              {blockEmbedUrl ? (
-                <div className="video-container" style={{ marginBottom: '1.5rem' }}>
-                  <iframe src={blockEmbedUrl} title="Block Video" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-                </div>
-              ) : block.video_file ? (
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <video controls style={{ width: '100%', borderRadius: '12px' }}>
-                        <source src={block.video_file} type="video/mp4" />
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-              ) : null}
-
-              <div style={{ lineHeight: 1.8, color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '1.5rem' }} dangerouslySetInnerHTML={{ __html: block.content }}>
-              </div>
-
-              {block.image && (
-                <div style={{ margin: '1.5rem 0' }}>
-                  <img src={block.image} alt={block.title} style={{ width: '100%', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }} />
-                </div>
-              )}
-
-              {block.pdf_file && (
-                <div style={{ margin: '1.5rem 0' }}>
-                  <p style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '0.9rem' }}>📄 Supporting Document:</p>
-                  <div style={{ width: '100%', height: '500px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                    <embed src={block.pdf_file} type="application/pdf" width="100%" height="100%" />
-                  </div>
-                  <div style={{ marginTop: '0.75rem' }}>
-                    <a href={block.pdf_file} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-secondary">
-                        Open PDF in New Tab
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {lesson.images?.length > 0 && (
-          <div style={{ marginBottom: 'var(--space-2xl)', borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-xl)' }}>
-            <h3 style={{ marginBottom: 'var(--space-md)' }}>Images</h3>
-            <div className="lesson-media-grid">
-              {lesson.images.map(img => (
-                <div key={img.id} className="lesson-image-container">
-                  <img src={img.image} alt={img.caption} className="lesson-image" />
-                  {img.caption && <p style={{ fontSize: '0.75rem', padding: '0.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>{img.caption}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {lesson.files?.length > 0 && (
-          <div style={{ marginBottom: 'var(--space-2xl)', borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-xl)' }}>
-            <h3 style={{ marginBottom: 'var(--space-md)' }}>Supporting Resources</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xl)' }}>
-              {lesson.files.map(file => (
-                <div key={file.id}>
-                    <p style={{ fontWeight: 600, marginBottom: '0.75rem' }}>📁 {file.title}</p>
-                    {file.file.toLowerCase().endsWith('.pdf') ? (
-                        <div style={{ width: '100%', height: '600px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                            <embed src={file.file} type="application/pdf" width="100%" height="100%" />
-                        </div>
-                    ) : (
-                        <a href={file.file} target="_blank" rel="noopener noreferrer" className="lesson-file-link">
-                           Download {file.title}
-                        </a>
-                    )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {lesson.links?.length > 0 && (
-          <div style={{ marginBottom: 'var(--space-2xl)', borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-xl)' }}>
-            <h3 style={{ marginBottom: 'var(--space-md)' }}>Supplementary Links</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-              {lesson.links.map(link => (
-                <div key={link.id} className="badge badge-info" style={{ justifyContent: 'flex-start', padding: '0.8rem', display: 'flex', alignItems: 'center' }}>
-                  <a href={link.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>🔗</span>
-                    <span style={{ fontWeight: 600 }}>{link.title}</span>
-                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>({new URL(link.url).hostname})</span>
-                  </a>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--space-2xl)', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '2.5rem', display: 'flex', justifyContent: 'center', marginTop: '3rem' }}>
           {!lesson.is_completed ? (
-            <button className="btn btn-success btn-block" style={{ maxWidth: '400px', padding: '1rem' }} onClick={handleComplete} disabled={completing}>
-              {completing ? 'Taking note...' : 'Mark as Completed'}
+            <button className="btn btn-success" style={{ minWidth: '300px', padding: '1rem 2rem', fontSize: '1.1rem', fontWeight: 600 }} onClick={handleComplete} disabled={completing}>
+              {completing ? 'Completing...' : 'Mark Lesson as Completed'}
             </button>
           ) : (
-            <div className="badge badge-success" style={{ padding: '0.8rem 2rem', fontSize: '1rem' }}>
-              ✓ You completed this lesson
+            <div className="badge badge-success" style={{ padding: '1rem 2.5rem', fontSize: '1.1rem', borderRadius: '30px' }}>
+              ✓ You have completed this lesson
             </div>
           )}
         </div>

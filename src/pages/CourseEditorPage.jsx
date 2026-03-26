@@ -124,7 +124,7 @@ export default function CourseEditorPage() {
     try {
       // Find the chapter to calculate lesson order
       const chapter = course.chapters.find(c => c.id === chapterId);
-      await createLesson({ chapter: chapterId, title, content: '', order: chapter?.lessons?.length || 0 });
+      await createLesson({ chapter: chapterId, title, order: chapter?.lessons?.length || 0 });
       loadCourse();
     } catch { alert('Failed to add lesson'); }
   };

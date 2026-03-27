@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import CourseCard from '../components/CourseCard';
 import { getCourses } from '../services/api';
 
 export default function CoursesPage() {
@@ -30,29 +31,9 @@ export default function CoursesPage() {
           <p className="empty-state-text">No courses available yet. Check back soon!</p>
         </div>
       ) : (
-        <div className="grid-courses">
+        <div className="grid-courses" style={{ padding: '0 var(--space-lg)' }}>
           {courses.map((course) => (
-            <Link to={`/courses/${course.id}`} key={course.id}>
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="card-title">{course.title}</h3>
-                  <p className="card-subtitle">by {course.instructor_name}</p>
-                </div>
-                <div className="card-body">
-                  <p>{course.description?.substring(0, 120)}...</p>
-                </div>
-                <div className="card-footer">
-                  {parseFloat(course.price) === 0 ? (
-                    <span className="badge badge-free">Free</span>
-                  ) : (
-                    <span className="price-tag">${course.price}</span>
-                  )}
-                  <span className="badge badge-info">
-                    {course.modules?.length || 0} modules
-                  </span>
-                </div>
-              </div>
-            </Link>
+            <CourseCard key={course.id} course={course} />
           ))}
         </div>
       )}

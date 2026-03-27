@@ -1,5 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DashboardLayout from '../components/DashboardLayout';
+import StatCard from '../components/StatCard';
 import {
   getUsers, updateUser, deleteUser, createUser,
   getCategories, createCategory, deleteCategory,
@@ -28,83 +30,18 @@ export default function AdminDashboardPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="admin-layout">
-      {/* Sidebar */}
-      <aside className="admin-sidebar" style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-subtle)' }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1.5rem', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--accent-primary)', letterSpacing: '-0.03em' }}>Fatra <span style={{ color: 'var(--text-primary)' }}>OS</span></h2>
-          <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.2rem' }}>Administration Suite</p>
-        </div>
-        <nav style={{ padding: '0 0.75rem' }}>
-          {MENU_ITEMS.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveItem(item.id)}
-              className={`admin-sidebar-item ${activeItem === item.id ? 'active' : ''}`}
-              style={{ 
-                width: '100%', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.75rem', 
-                padding: '0.85rem 1rem', 
-                borderRadius: 'var(--radius-md)',
-                marginBottom: '0.25rem',
-                border: 'none',
-                background: activeItem === item.id ? 'var(--accent-primary)' : 'transparent',
-                color: activeItem === item.id ? 'white' : 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'var(--transition-normal)',
-                fontWeight: 600,
-                fontSize: '0.9rem'
-              }}
-            >
-              <item.icon size={18} />
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="admin-main-content">
-        <header style={{ 
-          marginBottom: '1.5rem', 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'flex-end',
-          borderBottom: '1px solid var(--border-subtle)',
-          paddingBottom: '1rem'
-        }}>
-          <div>
-            <h1 className="page-title" style={{ fontSize: '1.5rem', marginBottom: '0' }}>
-              {MENU_ITEMS.find(i => i.id === activeItem)?.label}
-            </h1>
-            <p className="page-subtitle" style={{ fontSize: '0.8rem' }}>Welcome back, Administrator.</p>
-          </div>
-          
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem', 
-            background: 'var(--success-bg)', 
-            padding: '0.4rem 0.8rem', 
-            borderRadius: 'var(--radius-full)',
-            border: '1px solid var(--success-border)',
-            fontSize: '0.75rem',
-            color: 'var(--success)',
-            fontWeight: 600
-          }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }}></div>
-            System status: Stable
-          </div>
-        </header>
-
-        {activeItem === 'Overview' && <OverviewTab />}
-        {activeItem === 'Users' && <UsersTab />}
-        {activeItem === 'Categories' && <CategoriesTab />}
-        {activeItem === 'Courses' && <CourseApprovalsTab />}
-      </main>
-    </div>
+    <DashboardLayout 
+      title={MENU_ITEMS.find(i => i.id === activeItem)?.label}
+      subtitle="Welcome back, Administrator."
+      tabs={MENU_ITEMS}
+      activeTab={activeItem}
+      onTabChange={setActiveItem}
+    >
+      {activeItem === 'Overview' && <OverviewTab />}
+      {activeItem === 'Users' && <UsersTab />}
+      {activeItem === 'Categories' && <CategoriesTab />}
+      {activeItem === 'Courses' && <CourseApprovalsTab />}
+    </DashboardLayout>
   );
 }
 
@@ -230,24 +167,7 @@ function OverviewTab() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, trend, variant = 'primary' }) {
-  return (
-    <div className="stat-card-modern">
-      <div className="stat-icon-wrapper" style={{ flexShrink: 0 }}>
-        <Icon size={18} />
-      </div>
-      <div className="stat-info" style={{ overflow: 'hidden' }}>
-        <span className="stat-label-modern" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</span>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-          <span className="stat-value-modern">{value}</span>
-          <span style={{ fontSize: '0.6rem', color: variant === 'warning' ? 'var(--warning)' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-            {trend.split(' ').slice(0, 2).join(' ')}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
+
 
 /* ─── USERS TAB ─────────────────────────────────────────── */
 function UsersTab() {

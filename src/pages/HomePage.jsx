@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import CourseCard from '../components/CourseCard';
 import { useAuth } from '../context/AuthContext';
 import { getCourses } from '../services/api';
 
@@ -77,6 +78,35 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Mission & Vision Section */}
+      <section className="mission-vision-section">
+        <div className="container">
+          <div className="section-header">
+            <h2 className="section-title">Who We Are</h2>
+            <p className="section-subtitle">Driving the future of education with passion, innovation, and unwavering commitment.</p>
+          </div>
+          <div className="mission-vision-grid">
+            {/* Mission Card */}
+            <div className="mv-card">
+              <div className="mv-icon">🚀</div>
+              <h3 className="mv-title">Our Mission</h3>
+              <p className="mv-text">
+                To democratize high-quality education by providing accessible, world-class learning experiences that empower individuals to achieve their fullest potential and excel in a rapidly evolving global economy.
+              </p>
+            </div>
+            {/* Vision Card */}
+            <div className="mv-card">
+              <div className="mv-icon">👁️</div>
+              <h3 className="mv-title">Our Vision</h3>
+              <p className="mv-text">
+                To become the most trusted and innovative educational platform globally, cultivating a community of lifelong learners, expert instructors, and visionary leaders who shape a brighter tomorrow.
+              </p>
+            </div>
+          </div>
+          <div className="mv-background-decoration"></div>
+        </div>
+      </section>
+
       {/* Top Rated Courses Section */}
       <section className="section" style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-2xl)', margin: 'var(--space-xl) var(--space-lg)' }}>
         <div className="container">
@@ -85,27 +115,11 @@ export default function HomePage() {
             <p className="section-subtitle">Verified high-quality content based on student feedback and results.</p>
           </div>
           <div className="grid-courses">
-            {featuredCourses.length > 0 ? featuredCourses.map(course => (
-              <Link to={`/courses/${course.id}`} key={course.id} className="card" style={{ background: 'var(--bg-card)' }}>
-                 <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem' }}>
-                    <span className="badge badge-success">Top Rated</span>
-                 </div>
-                 <div className="card-header">
-                    <h3 className="card-title">{course.title}</h3>
-                    <p className="card-subtitle">by {course.instructor_name}</p>
-                 </div>
-                 <div className="card-body">
-                    <div style={{ display: 'flex', color: '#fbbf24', marginBottom: '0.5rem' }}>
-                       ★★★★★ <span style={{ color: 'var(--text-muted)', marginLeft: '0.5rem', fontSize: '0.8rem' }}>(4.9/5)</span>
-                    </div>
-                    <p>{course.description?.substring(0, 80)}...</p>
-                 </div>
-                 <div className="card-footer">
-                    <span className="price-tag">${course.price}</span>
-                    <button className="btn btn-sm btn-primary">Enroll Now</button>
-                 </div>
-              </Link>
-            )) : <p style={{ textAlign: 'center', width: '100%', color: 'var(--text-muted)' }}>Loading top rated courses...</p>}
+            {featuredCourses.length > 0 ? (
+              featuredCourses.map(course => <CourseCard key={`top-${course.id}`} course={course} variant="top-rated" />)
+            ) : (
+              <p style={{ textAlign: 'center', width: '100%', color: 'var(--text-muted)' }}>Loading top rated courses...</p>
+            )}
           </div>
         </div>
       </section>
@@ -118,22 +132,11 @@ export default function HomePage() {
             <p className="section-subtitle">Start with our most popular and highest-rated programs.</p>
           </div>
           <div className="grid-courses">
-            {featuredCourses.map(course => (
-              <Link to={`/courses/${course.id}`} key={course.id} className="card">
-                <div className="badge-new">NEW</div>
-                <div className="card-header">
-                  <h3 className="card-title">{course.title}</h3>
-                  <p className="card-subtitle">by {course.instructor_name}</p>
-                </div>
-                <div className="card-body">
-                  <p>{course.description?.substring(0, 100)}...</p>
-                </div>
-                <div className="card-footer">
-                   <span className="price-tag">${course.price}</span>
-                   <span className="badge badge-info">{course.chapters?.length || 0} Chapters</span>
-                </div>
-              </Link>
-            ))}
+            {featuredCourses.length > 0 ? (
+              featuredCourses.map(course => <CourseCard key={`featured-${course.id}`} course={{...course, is_new: true}} variant="featured" />)
+            ) : (
+              <p style={{ textAlign: 'center', width: '100%', color: 'var(--text-muted)' }}>Loading featured courses...</p>
+            )}
           </div>
           <div style={{ textAlign: 'center', marginTop: 'var(--space-2xl)' }}>
             <Link to="/courses" className="btn btn-secondary">View All Courses</Link>

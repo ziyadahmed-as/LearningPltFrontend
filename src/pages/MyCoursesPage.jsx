@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getInstructorStats, createCourse, deleteCourse, updateCourse, getCategories } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import DashboardLayout from '../components/DashboardLayout';
+import StatCard from '../components/StatCard';
+import { BookOpen, CheckCircle, Clock, Users, Eye, Layers } from 'lucide-react';
 
 export default function MyCoursesPage() {
   const { user } = useAuth();
@@ -70,41 +73,24 @@ export default function MyCoursesPage() {
   if (loading || !stats) return <div className="loading-container"><div className="spinner"></div></div>;
 
   return (
-    <div>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-        <div>
-          <h1 className="page-title">Instructor Dashboard</h1>
-          <p className="page-subtitle">Create courses, manage lessons, and track performance</p>
-        </div>
+    <DashboardLayout 
+      title="Instructor Dashboard"
+      subtitle="Create courses, manage lessons, and track performance"
+    >
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? 'Cancel' : '+ New Course'}
         </button>
       </div>
 
       {/* Stats overview */}
-      <div className="stats-grid" style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))' }}>
-        <div className="stat-card">
-          <div className="stat-value">{stats.total_courses}</div><div className="stat-label">Total Courses</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{stats.published}</div><div className="stat-label">Published</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value" style={{ color: stats.approved > 0 ? 'var(--success)' : undefined }}>{stats.approved}</div>
-          <div className="stat-label">✅ Approved</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value" style={{ color: stats.pending > 0 ? 'var(--warning, #f59e0b)' : undefined }}>{stats.pending}</div>
-          <div className="stat-label">⏳ Awaiting Approval</div>
-        </div>
-        <div className="stat-card" style={{ background: 'var(--primary-light)' }}>
-          <div className="stat-value" style={{ color: 'var(--primary)' }}>{stats.total_enrollments}</div>
-          <div className="stat-label">Total Enrollments</div>
-        </div>
-        <div className="stat-card" style={{ background: 'var(--primary-light)' }}>
-          <div className="stat-value" style={{ color: 'var(--primary)' }}>{stats.total_views}</div>
-          <div className="stat-label">Total Views</div>
-        </div>
+      <div className="stats-grid-modern" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+        <StatCard icon={Layers} label="Total Courses" value={stats.total_courses} />
+        <StatCard icon={BookOpen} label="Published" value={stats.published} />
+        <StatCard icon={CheckCircle} label="Approved" value={stats.approved} variant={stats.approved > 0 ? "success" : "primary"} />
+        <StatCard icon={Clock} label="Pending Review" value={stats.pending} variant={stats.pending > 0 ? "warning" : "primary"} />
+        <StatCard icon={Users} label="Total Enrollments" value={stats.total_enrollments} />
+        <StatCard icon={Eye} label="Total Views" value={stats.total_views} />
       </div>
 
       {showForm && (
@@ -232,6 +218,6 @@ export default function MyCoursesPage() {
           })}
         </div>
       )}
-    </div>
+    </DashboardLayout>
   );
 }

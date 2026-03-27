@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getMyEnrollments, createCheckoutSession } from '../services/api';
+import DashboardLayout from '../components/DashboardLayout';
+import StatCard from '../components/StatCard';
+import { BookOpen, CheckCircle, Clock } from 'lucide-react';
 
 export default function MyEnrollmentsPage() {
   const [enrollments, setEnrollments] = useState([]);
@@ -25,11 +28,18 @@ export default function MyEnrollmentsPage() {
 
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
 
+  const activeCount = enrollments.filter(e => e.is_paid).length;
+  const pendingCount = enrollments.length - activeCount;
+
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="page-title">My Enrollments</h1>
-        <p className="page-subtitle">Track your enrolled courses and payment status</p>
+    <DashboardLayout 
+      title="My Enrollments"
+      subtitle="Track your enrolled courses and payment status"
+    >
+      <div className="stats-grid-modern" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: '2rem' }}>
+        <StatCard icon={BookOpen} label="Total Enrollments" value={enrollments.length} />
+        <StatCard icon={CheckCircle} label="Active Courses" value={activeCount} variant={activeCount > 0 ? "success" : "primary"} />
+        <StatCard icon={Clock} label="Pending Payments" value={pendingCount} variant={pendingCount > 0 ? "warning" : "primary"} />
       </div>
 
       {enrollments.length === 0 ? (
@@ -76,6 +86,6 @@ export default function MyEnrollmentsPage() {
           </table>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   );
 }

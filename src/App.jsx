@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
@@ -70,20 +70,31 @@ function AppRoutes() {
   );
 }
 
+function LayoutWrapper() {
+  const location = useLocation();
+  const isDashboard = ['/admin', '/admin/users', '/my-courses', '/revenue', '/my-enrollments'].includes(location.pathname);
+
+  return (
+    <div className="app-container">
+      {!isDashboard && <Navbar />}
+      <main className="main-content">
+        <AppRoutes />
+      </main>
+      {!isDashboard && (
+        <footer className="app-footer">
+          © 2026 Fatra Academy — Full-Stack Django & React Learning Platform
+        </footer>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <div className="app-container">
-            <Navbar />
-            <main className="main-content">
-              <AppRoutes />
-            </main>
-            <footer className="app-footer">
-              © 2026 LearnPlatform — Full-Stack Django & React Learning Platform
-            </footer>
-          </div>
+          <LayoutWrapper />
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

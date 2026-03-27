@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getWallet, getWithdrawalRequests, createWithdrawalRequest } from '../services/api';
+import DashboardLayout from '../components/DashboardLayout';
+import StatCard from '../components/StatCard';
+import { DollarSign, TrendingUp, Layers } from 'lucide-react';
 
 export default function InstructorRevenuePage() {
   const [wallet, setWallet] = useState(null);
@@ -49,25 +52,27 @@ export default function InstructorRevenuePage() {
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
 
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="page-title">Revenue Dashboard</h1>
-        <p className="page-subtitle">Track your earnings and manage withdrawals</p>
-      </div>
-
-      <div className="stats-grid" style={{ marginBottom: '2rem' }}>
-        <div className="stat-card" style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white' }}>
-          <div className="stat-value">${wallet.balance}</div>
-          <div className="stat-label" style={{ color: 'rgba(255,255,255,0.8)' }}>Available Balance</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">${wallet.total_earned}</div>
-          <div className="stat-label">Total Lifetime Earnings</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{wallet.transactions?.length || 0}</div>
-          <div className="stat-label">Total Transactions</div>
-        </div>
+    <DashboardLayout 
+      title="Revenue Dashboard"
+      subtitle="Track your earnings and manage withdrawals"
+    >
+      <div className="stats-grid-modern" style={{ marginBottom: '2rem' }}>
+        <StatCard 
+          icon={DollarSign} 
+          label="Available Balance" 
+          value={`$${wallet.balance}`} 
+          variant="success" 
+        />
+        <StatCard 
+          icon={TrendingUp} 
+          label="Total Lifetime Earnings" 
+          value={`$${wallet.total_earned}`} 
+        />
+        <StatCard 
+          icon={Layers} 
+          label="Total Transactions" 
+          value={wallet.transactions?.length || 0} 
+        />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'start' }}>
@@ -182,6 +187,6 @@ export default function InstructorRevenuePage() {
           </table>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

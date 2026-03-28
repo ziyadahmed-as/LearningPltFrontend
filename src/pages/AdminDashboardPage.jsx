@@ -98,12 +98,6 @@ function OverviewTab() {
           trend="Global reach"
         />
         <StatCard 
-          icon={Eye} 
-          label="Platform Views" 
-          value={stats?.total_views || 0} 
-          trend="Real-time traffic"
-        />
-        <StatCard 
           icon={TrendingUp} 
           label="Approval Queue" 
           value={stats?.pending || 0} 

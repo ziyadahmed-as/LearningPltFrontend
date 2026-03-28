@@ -2,17 +2,22 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CourseCard from '../components/CourseCard';
 import { useAuth } from '../context/AuthContext';
-import { getCourses } from '../services/api';
+import { getCourses, getInstructorStats } from '../services/api';
+import { Eye } from 'lucide-react';
 
 export default function HomePage() {
   const { user } = useAuth();
   const [featuredCourses, setFeaturedCourses] = useState([]);
+
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     getCourses().then(res => {
       const all = Array.isArray(res.data) ? res.data : res.data.results || [];
       setFeaturedCourses(all.slice(0, 3));
     }).catch(() => {});
+
+    getInstructorStats().then(res => setStats(res.data)).catch(() => {});
   }, []);
 
   return (
@@ -205,22 +210,29 @@ export default function HomePage() {
       </section>
 
       {/* Why Choose Us */}
-      <section className="section section-light">
-        <div className="container features-grid">
-           <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontSize: '2.5rem', fontWeight: 800 }}>10k+</h2>
-              <p>Active Learners</p>
-           </div>
-           <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontSize: '2.5rem', fontWeight: 800 }}>500+</h2>
-              <p>Verified Instructors</p>
-           </div>
-           <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontSize: '2.5rem', fontWeight: 800 }}>98%</h2>
-              <p>Success Rate</p>
-           </div>
-        </div>
-      </section>
+       <section className="section section-light" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-primary)', padding: 'var(--space-2xl) 0' }}>
+         <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', textAlign: 'center' }}>
+            <div style={{ padding: '0.5rem' }}>
+               <h2 style={{ fontSize: '1.8rem', fontWeight: 900, margin: 0 }}>10k+</h2>
+               <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Learners</p>
+            </div>
+            <div style={{ padding: '0.5rem', borderLeft: '1px solid var(--border-subtle)' }}>
+               <h2 style={{ fontSize: '1.8rem', fontWeight: 900, margin: 0 }}>500+</h2>
+               <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Instructors</p>
+            </div>
+            <div style={{ padding: '0.5rem', borderLeft: '1px solid var(--border-subtle)' }}>
+               <h2 style={{ fontSize: '1.8rem', fontWeight: 900, margin: 0, color: 'var(--success)' }}>98%</h2>
+               <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Success</p>
+            </div>
+            <div style={{ padding: '0.5rem', borderLeft: '1px solid var(--border-subtle)' }}>
+               <h2 style={{ fontSize: '1.8rem', fontWeight: 900, margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                 <Eye size={16} style={{ color: 'var(--accent-primary)' }} />
+                 {stats?.total_views || 13}
+               </h2>
+               <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Traffic</p>
+            </div>
+         </div>
+       </section>
 
       {/* Become an Instructor */}
       <section className="section container">

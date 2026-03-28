@@ -11,7 +11,7 @@ import {
 import { 
   Users, Layers, CheckCircle, BarChart3, LayoutDashboard, 
   Trash2, UserPlus, Search, Shield, GraduationCap, Eye, ExternalLink,
-  Users2, BookOpen, Clock, TrendingUp
+  Users2, BookOpen, Clock, TrendingUp, Plus, X
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -332,6 +332,7 @@ function UsersTab() {
 
 /* ─── CATEGORIES TAB ─────────────────────────────────────── */
 function CategoriesTab() {
+  const [showForm, setShowForm] = useState(false);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState('');
@@ -352,7 +353,7 @@ function CategoriesTab() {
     const slug = newSlug || toSlug(newName);
     try {
       await createCategory({ name: newName, slug });
-      setNewName(''); setNewSlug(''); loadCategories();
+      setNewName(''); setNewSlug(''); setShowForm(false); loadCategories();
     } catch (err) { setError(err.response?.data?.slug?.[0] || err.response?.data?.name?.[0] || 'Failed to create category.'); }
   };
 
@@ -367,40 +368,134 @@ function CategoriesTab() {
 
   return (
     <div className="fade-in">
-      <div className="card" style={{ maxWidth: '500px', marginBottom: '2.5rem' }}>
-        <h3 style={{ marginBottom: '1.25rem' }}>Taxonomy Management</h3>
-        <form onSubmit={handleAdd}>
-          <div className="form-group">
-            <label className="form-label">Display Name</label>
-            <input type="text" className="form-input" required placeholder="e.g. Mechanical Engineering"
-              value={newName} onChange={e => { setNewName(e.target.value); setNewSlug(toSlug(e.target.value)); }} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Uniform Resource Slug</label>
-            <input type="text" className="form-input" required placeholder="e.g. mechanical-engineering"
-              value={newSlug} onChange={e => setNewSlug(e.target.value)} />
-          </div>
-          {error && <div className="alert alert-error">{error}</div>}
-          <button type="submit" className="btn btn-primary">Define Category</button>
-        </form>
-      </div>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Site Taxonomy</h3>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Manage course categories and URL structures</p>
+        </div>
+        <button 
+          className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'}`}
+          onClick={() => setShowForm(!showForm)}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
+          {showForm ? <X size={18} /> : <Plus size={18} />}
+          {showForm ? 'Cancel' : 'Add Taxonomy'}
+        </button>
+      </header>
 
-      <div className="table-container">
-        <table>
-          <thead><tr><th>ID</th><th>Structure Name</th><th>Unique Slug</th><th>Actions</th></tr></thead>
-          <tbody>
-            {categories.length === 0 ? (
-              <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Architecture is empty.</td></tr>
-            ) : categories.map(cat => (
-              <tr key={cat.id}>
-                <td>#{cat.id}</td>
-                <td style={{ fontWeight: 700 }}>{cat.name}</td>
-                <td><code style={{ fontSize: '0.8rem', opacity: 0.8 }}>/{cat.slug}</code></td>
-                <td><button className="btn btn-sm btn-danger" onClick={() => handleDelete(cat.id)}>Remove</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="grid" style={{ 
+        gridTemplateColumns: showForm ? 'minmax(320px, 1fr) 2fr' : '1fr', 
+        gap: '2rem', 
+        alignItems: 'start',
+        transition: 'all 0.3s ease'
+      }}>
+        {/* Left: Add Form (Animated) */}
+        {showForm && (
+          <div className="card fade-in" style={{ position: 'sticky', top: 'var(--space-lg)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <div style={{ padding: '0.6rem', background: 'var(--info-bg)', borderRadius: 'var(--radius-lg)', color: 'var(--info)' }}>
+                <Layers size={20} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Define Category</h3>
+            </div>
+
+            <form onSubmit={handleAdd}>
+              <div className="form-group">
+                <label className="form-label">Category Name</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  required 
+                  placeholder="e.g. Mechanical Engineering"
+                  value={newName} 
+                  onChange={e => { 
+                    setNewName(e.target.value); 
+                    if (!newSlug || newSlug === toSlug(newName)) {
+                      setNewSlug(toSlug(e.target.value));
+                    }
+                  }} 
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">URL Slug</label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>/</span>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    required 
+                    style={{ paddingLeft: '1.6rem' }}
+                    placeholder="mech-engineering"
+                    value={newSlug} 
+                    onChange={e => setNewSlug(e.target.value)} 
+                  />
+                </div>
+              </div>
+              {error && <div className="alert alert-error" style={{ marginBottom: '1rem', padding: '0.6rem', fontSize: '0.75rem' }}>{error}</div>}
+              <button type="submit" className="btn btn-primary btn-block">
+                Create Structure
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Right: Category List */}
+        <div className="card">
+          <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Active Categories</h3>
+            <span className="badge badge-info">{categories.length} Total</span>
+          </div>
+
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Slug Reference</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>
+                      <Layers size={48} style={{ opacity: 0.1, marginBottom: '1rem' }} />
+                      <p>No categories defined yet.</p>
+                    </td>
+                  </tr>
+                ) : categories.map(cat => (
+                  <tr key={cat.id}>
+                    <td>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{cat.name}</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>ID: #{cat.id}</div>
+                    </td>
+                    <td>
+                      <code style={{ 
+                        fontSize: '0.75rem', 
+                        padding: '0.2rem 0.5rem', 
+                        background: 'var(--bg-elevated)', 
+                        borderRadius: 'var(--radius-sm)',
+                        color: 'var(--accent-primary)'
+                      }}>
+                        /{cat.slug}
+                      </code>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button 
+                        className="btn btn-sm" 
+                        style={{ color: 'var(--error)', background: 'transparent' }}
+                        onClick={() => handleDelete(cat.id)}
+                        title="Delete Category"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

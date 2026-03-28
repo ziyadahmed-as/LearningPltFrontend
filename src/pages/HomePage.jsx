@@ -43,41 +43,52 @@ export default function HomePage() {
           <p className="section-subtitle">Choose your path and start your journey today.</p>
         </div>
         <div className="features-grid">
+          {/* Soft Skills Card */}
           <div className="card feature-card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ height: '240px', overflow: 'hidden', position: 'relative' }}>
-              <img src="/ethiopian_role_model_student_1774533798043.png" alt="Top Scorer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', padding: '1rem', color: 'white' }}>
-                <span className="badge badge-success" style={{ marginBottom: '0.5rem' }}>Top Scorer</span>
-                <h4 style={{ margin: 0 }}>Amanuel T.</h4>
-                <p style={{ fontSize: '0.75rem', margin: 0 }}>9th Grade National Exam: 98%</p>
+            <div style={{ height: '220px', overflow: 'hidden', position: 'relative' }}>
+              <img src="/soft_skills.png" alt="Soft Skills" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(8, 8, 16, 0.85) 100%)' }}></div>
+              <div style={{ position: 'absolute', bottom: '1.2rem', left: '1.2rem', color: 'white' }}>
+                <span className="badge badge-info" style={{ marginBottom: '0.4rem', background: 'rgba(59, 130, 246, 0.2)', backdropFilter: 'blur(4px)', border: '1px solid rgba(59, 130, 246, 0.3)' }}>Career Growth</span>
+                <h4 style={{ margin: 0, fontSize: '1.2rem' }}>Soft Skills</h4>
               </div>
             </div>
             <div style={{ padding: '1.5rem', textAlign: 'left' }}>
-              <h3 className="card-title">Entrance Exam Prep</h3>
-              <p className="card-body">Score like Amanuel. Master Mathematics, Physics, and more with our proven curriculum.</p>
-            </div>
-          </div>
-          
-          <div className="card feature-card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ height: '240px', overflow: 'hidden', position: 'relative' }}>
-              <img src="/ethiopian_expert_instructor_1774533894053.png" alt="Expert Instructor" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', padding: '1rem', color: 'white' }}>
-                <span className="badge badge-info" style={{ marginBottom: '0.5rem' }}>Master Instructor</span>
-                <h4 style={{ margin: 0 }}>Dr. Selamawit G.</h4>
-                <p style={{ fontSize: '0.75rem', margin: 0 }}>Senior Software Architect & Researcher</p>
-              </div>
-            </div>
-            <div style={{ padding: '1.5rem', textAlign: 'left' }}>
-              <h3 className="card-title">Technology & Code</h3>
-              <p className="card-body">Learn from industry veterans. Web dev, AI, and systems design taught with local context.</p>
+              <p className="card-body" style={{ margin: 0, fontSize: '0.9rem' }}>Master communication, leadership, and critical thinking essential for thriving in the modern workplace.</p>
+              <Link to="/courses" className="btn btn-sm btn-secondary" style={{ marginTop: '1.2rem', width: '100%' }}>Explore Skills</Link>
             </div>
           </div>
 
-          <div className="card feature-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div className="feature-icon">🌐</div>
-            <h3 className="card-title">Soft Skills</h3>
-            <p className="card-body">Communication, Leadership, and Digital Literacy skills essential for modern workplace success.</p>
-            <Link to="/courses" className="btn btn-sm btn-secondary" style={{ marginTop: '1rem' }}>Browse Skills</Link>
+          {/* Tech Courses Card */}
+          <div className="card feature-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ height: '220px', overflow: 'hidden', position: 'relative' }}>
+              <img src="/tech_courses.png" alt="Tech Courses" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(8, 8, 16, 0.85) 100%)' }}></div>
+              <div style={{ position: 'absolute', bottom: '1.2rem', left: '1.2rem', color: 'white' }}>
+                <span className="badge badge-success" style={{ marginBottom: '0.4rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>Engineering</span>
+                <h4 style={{ margin: 0, fontSize: '1.2rem' }}>Tech Courses</h4>
+              </div>
+            </div>
+            <div style={{ padding: '1.5rem', textAlign: 'left' }}>
+              <p className="card-body" style={{ margin: 0, fontSize: '0.9rem' }}>Dive deep into full-stack development, AI, and cloud infrastructure with industry-standard curriculum.</p>
+              <Link to="/courses" className="btn btn-sm btn-secondary" style={{ marginTop: '1.2rem', width: '100%' }}>Start Coding</Link>
+            </div>
+          </div>
+
+          {/* Live Tutorial Card */}
+          <div className="card feature-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ height: '220px', overflow: 'hidden', position: 'relative' }}>
+              <img src="/live_tutorials.png" alt="Live Tutorials" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(8, 8, 16, 0.85) 100%)' }}></div>
+              <div style={{ position: 'absolute', bottom: '1.2rem', left: '1.2rem', color: 'white' }}>
+                <span className="badge badge-warning" style={{ marginBottom: '0.4rem', border: '1px solid rgba(245, 158, 11, 0.3)' }}>Real-time</span>
+                <h4 style={{ margin: 0, fontSize: '1.2rem' }}>Live Tutorials</h4>
+              </div>
+            </div>
+            <div style={{ padding: '1.5rem', textAlign: 'left' }}>
+              <p className="card-body" style={{ margin: 0, fontSize: '0.9rem' }}>Join interactive live sessions with experts. Ask questions, get feedback, and learn together in real-time.</p>
+              <Link to="/courses" className="btn btn-sm btn-secondary" style={{ marginTop: '1.2rem', width: '100%' }}>Join Live</Link>
+            </div>
           </div>
         </div>
       </section>

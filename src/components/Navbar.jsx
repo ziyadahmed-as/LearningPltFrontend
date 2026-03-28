@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { HelpCircle } from 'lucide-react';
 
-export default function Navbar() {
+export default function Navbar({ onHelpClick }) {
   const { user, logoutUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
@@ -40,6 +41,22 @@ export default function Navbar() {
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           >
             {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+          <button 
+            onClick={onHelpClick}
+            className="btn btn-sm btn-secondary"
+            style={{ 
+              borderRadius: 'var(--radius-full)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.4rem',
+              background: 'var(--surface-hover)',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-primary)'
+            }}
+          >
+            <HelpCircle size={16} />
+            <span>Help</span>
           </button>
         </div>
       </div>

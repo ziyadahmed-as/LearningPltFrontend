@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, Users, CheckCircle, Layers, 
-  BookOpen, DollarSign, UserCircle, LogOut, Menu, X 
+  BookOpen, DollarSign, UserCircle, LogOut, Menu, X, HelpCircle 
 } from 'lucide-react';
 
 export default function DashboardLayout({ 
@@ -149,17 +149,40 @@ export default function DashboardLayout({
               {subtitle && <p className="page-subtitle" style={{ fontSize: '0.85rem' }}>{subtitle}</p>}
             </div>
             
-            {user?.role === 'ADMIN' && (
-              <div style={{ 
-                display: 'flex', alignItems: 'center', gap: '0.5rem', 
-                background: 'var(--success-bg)', padding: '0.4rem 0.8rem', 
-                borderRadius: 'var(--radius-full)', border: '1px solid var(--success-border)',
-                fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600
-              }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }}></div>
-                System OK
-              </div>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button 
+                onClick={() => window.dispatchEvent(new CustomEvent('open-fatra-ai'))}
+                className="btn btn-sm"
+                style={{ 
+                  background: 'var(--bg-card)', 
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.5rem 0.9rem',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: 'var(--shadow-sm)',
+                  fontSize: '0.8rem',
+                  fontWeight: 600
+                }}
+              >
+                <HelpCircle size={16} />
+                <span>Help AI</span>
+              </button>
+              
+              {user?.role === 'ADMIN' && (
+                <div style={{ 
+                  display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                  background: 'var(--success-bg)', padding: '0.4rem 0.8rem', 
+                  borderRadius: 'var(--radius-full)', border: '1px solid var(--success-border)',
+                  fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600
+                }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }}></div>
+                  System OK
+                </div>
+              )}
+            </div>
           </header>
         )}
         

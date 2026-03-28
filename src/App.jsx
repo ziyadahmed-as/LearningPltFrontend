@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
+import FatraAIChat from './components/FatraAIChat';
+import { HelpCircle } from 'lucide-react';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -74,12 +76,17 @@ function LayoutWrapper() {
   const location = useLocation();
   const isDashboard = ['/admin', '/admin/users', '/my-courses', '/revenue', '/my-enrollments', '/profile'].includes(location.pathname);
 
+  const openHelp = () => {
+    window.dispatchEvent(new CustomEvent('open-fatra-ai'));
+  };
+
   return (
     <div className="app-container">
-      {!isDashboard && <Navbar />}
+      {!isDashboard && <Navbar onHelpClick={openHelp} />}
       <main className="main-content">
         <AppRoutes />
       </main>
+      <FatraAIChat />
       {!isDashboard && (
         <footer className="app-footer">
           © 2026 Fatra Academy — Full-Stack Django & React Learning Platform

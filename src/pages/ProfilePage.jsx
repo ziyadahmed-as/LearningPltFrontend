@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { updateMe } from '../services/api';
+import DashboardLayout from '../components/DashboardLayout';
 
 export default function ProfilePage() {
   const { user, fetchUser } = useAuth();
@@ -29,41 +30,38 @@ export default function ProfilePage() {
   const update = (field, value) => setForm({ ...form, [field]: value });
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto' }}>
-      <div className="page-header">
-        <h1 className="page-title">My Profile</h1>
-        <p className="page-subtitle">
-          <span className="badge badge-info">{user?.role}</span>{' '}
-          @{user?.username} · {user?.email}
-        </p>
-      </div>
+    <DashboardLayout 
+      title="My Profile"
+      subtitle={`${user?.role} Portal · @${user?.username} · ${user?.email}`}
+    >
+      <div style={{ maxWidth: 800, margin: '0 auto' }}>
+        {msg && <div className="alert alert-success">{msg}</div>}
+        {error && <div className="alert alert-error">{error}</div>}
 
-      {msg && <div className="alert alert-success">{msg}</div>}
-      {error && <div className="alert alert-error">{error}</div>}
-
-      <div className="auth-card">
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
-              <label className="form-label">First Name</label>
-              <input className="form-input" value={form.first_name} onChange={(e) => update('first_name', e.target.value)} />
+        <div className="auth-card">
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="form-group">
+                <label className="form-label">First Name</label>
+                <input className="form-input" value={form.first_name} onChange={(e) => update('first_name', e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Last Name</label>
+                <input className="form-input" value={form.last_name} onChange={(e) => update('last_name', e.target.value)} />
+              </div>
             </div>
             <div className="form-group">
-              <label className="form-label">Last Name</label>
-              <input className="form-input" value={form.last_name} onChange={(e) => update('last_name', e.target.value)} />
+              <label className="form-label">Bio</label>
+              <textarea className="form-textarea" value={form.bio} onChange={(e) => update('bio', e.target.value)} />
             </div>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Bio</label>
-            <textarea className="form-textarea" value={form.bio} onChange={(e) => update('bio', e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Profile Picture URL</label>
-            <input className="form-input" value={form.profile_picture} onChange={(e) => update('profile_picture', e.target.value)} />
-          </div>
-          <button className="btn btn-primary btn-block" type="submit">Save Changes</button>
-        </form>
+            <div className="form-group">
+              <label className="form-label">Profile Picture URL</label>
+              <input className="form-input" value={form.profile_picture} onChange={(e) => update('profile_picture', e.target.value)} />
+            </div>
+            <button className="btn btn-primary btn-block" type="submit">Save Changes</button>
+          </form>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

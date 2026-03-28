@@ -18,17 +18,21 @@ export default function HomePage() {
   return (
     <div className="landing-page">
       {/* Hero Section */}
-      <section className="hero container">
-        <h1 className="hero-title">
-          Inspiring the Next Generation of <span style={{ color: 'var(--accent-primary)' }}>Ethiopian Leaders</span>
-        </h1>
-        <p className="hero-subtitle">
-          From Grade 9-12 Entrance Exam prep to high-demand Technology skills. 
-          Learn from experts, join live classes, and master your future.
-        </p>
-        <div className="hero-buttons">
-          <Link to="/courses" className="btn btn-primary">Start Learning Now</Link>
-          {!user && <Link to="/register" className="btn btn-secondary">Create Free Account</Link>}
+      <section className="hero">
+        <div className="hero-background" style={{ backgroundImage: 'url(/hero_bg.png)' }}></div>
+        <div className="hero-overlay"></div>
+        <div className="container hero-content">
+          <h1 className="hero-title white">
+            Inspiring the Next Generation of <span style={{ color: 'var(--eth-yellow)' }}>Ethiopian Leaders</span>
+          </h1>
+          <p className="hero-subtitle white">
+            From Grade 9-12 Entrance Exam prep to high-demand Technology skills. 
+            Learn from experts, join live classes, and master your future.
+          </p>
+          <div className="hero-buttons">
+            <Link to="/courses" className="btn btn-primary">Start Learning Now</Link>
+            {!user && <Link to="/register" className="btn btn-secondary" style={{ backgroundColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.3)', color: 'white' }}>Create Free Account</Link>}
+          </div>
         </div>
       </section>
 

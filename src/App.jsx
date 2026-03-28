@@ -72,7 +72,7 @@ function AppRoutes() {
 
 function LayoutWrapper() {
   const location = useLocation();
-  const isDashboard = ['/admin', '/admin/users', '/my-courses', '/revenue', '/my-enrollments'].includes(location.pathname);
+  const isDashboard = ['/admin', '/admin/users', '/my-courses', '/revenue', '/my-enrollments', '/profile'].includes(location.pathname);
 
   return (
     <div className="app-container">

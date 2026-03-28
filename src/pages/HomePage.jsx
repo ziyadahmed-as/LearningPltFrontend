@@ -19,13 +19,26 @@ export default function HomePage() {
     <div className="landing-page">
       {/* Hero Section */}
       <section className="hero">
-        <div className="hero-background" style={{ backgroundImage: 'url(/hero_bg.png)' }}></div>
-        <div className="hero-overlay"></div>
-        <div className="container hero-content">
+        <div className="hero-background" style={{ backgroundImage: 'url(/hero_image_new.jpg)', filter: 'brightness(0.9) contrast(1.1)' }}></div>
+        <div className="hero-overlay" style={{ background: 'linear-gradient(135deg, rgba(8, 8, 16, 0.85) 0%, rgba(8, 8, 16, 0.5) 50%, rgba(8, 8, 16, 0.85) 100%), radial-gradient(circle at center, transparent 0%, rgba(8, 8, 16, 0.4) 100%)' }}></div>
+        <div className="container hero-content" style={{ overflow: 'hidden' }}>
           <h1 className="hero-title white">
-            Inspiring the Next Generation of <span style={{ color: 'var(--eth-yellow)' }}>Ethiopian Leaders</span>
+            <div className="hero-title-scroll">
+              <span style={{ 
+                background: 'var(--accent-gradient)', 
+                WebkitBackgroundClip: 'text', 
+                WebkitTextFillColor: 'transparent',
+                display: 'inline-block',
+                fontSize: '0.6em',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                marginRight: '1rem',
+                verticalAlign: 'middle'
+              }}>Empowering Progress — </span>
+              Inspiring the Next Generation of <span style={{ color: 'var(--eth-yellow)', textShadow: '0 0 20px rgba(254, 203, 0, 0.3)' }}>Ethiopian Leaders</span>
+            </div>
           </h1>
-          <p className="hero-subtitle white">
+          <p className="hero-subtitle white" style={{ fontSize: '1.1rem', opacity: 0.9 }}>
             From Grade 9-12 Entrance Exam prep to high-demand Technology skills. 
             Learn from experts, join live classes, and master your future.
           </p>

@@ -74,7 +74,9 @@ function AppRoutes() {
 
 function LayoutWrapper() {
   const location = useLocation();
-  const isDashboard = ['/admin', '/admin/users', '/my-courses', '/revenue', '/my-enrollments', '/profile'].includes(location.pathname);
+  // We keep students and instructors in "full app mode" (hidden navbar),
+  // but let Admins keep the global navbar for easy site-wide navigation.
+  const isDashboard = ['/my-courses', '/revenue', '/my-enrollments'].includes(location.pathname);
 
   const openHelp = () => {
     window.dispatchEvent(new CustomEvent('open-fatra-ai'));

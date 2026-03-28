@@ -46,7 +46,14 @@ API.interceptors.response.use(
 export const login = (credentials) => API.post('/users/login/', credentials);
 export const register = (data) => API.post('/users/register/', data);
 export const getMe = () => API.get('/users/me/');
-export const updateMe = (data) => API.patch('/users/me/', data);
+export const updateMe = (data) => {
+  if (data instanceof FormData) {
+    return API.patch('/users/me/', data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
+  return API.patch('/users/me/', data);
+};
 
 // Courses
 export const getCourses = () => API.get('/courses/courses/');

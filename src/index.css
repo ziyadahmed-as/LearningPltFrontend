@@ -182,26 +182,11 @@
 }
 
 .hero-title {
-  font-size: 2.5rem;
+  font-size: 3.5rem;
   font-weight: 900;
   line-height: 1.1;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-xl);
   letter-spacing: -0.04em;
-  white-space: nowrap;
-  width: 100%;
-  overflow: hidden;
-  position: relative;
-}
-
-.hero-title-scroll {
-  display: inline-block;
-  padding-left: 100%;
-  animation: markoveScroll 18s linear infinite;
-}
-
-@keyframes markoveScroll {
-  0% { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-100%, 0, 0); }
 }
 
 .hero-subtitle {

@@ -6,6 +6,8 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editRole, setEditRole] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   
   // Create user form state
   const [showAddForm, setShowAddForm] = useState(false);
@@ -49,6 +51,22 @@ export default function AdminUsersPage() {
       loadUsers();
     } catch {
       alert('Failed to update role');
+    }
+  };
+
+  const handlePasswordUpdate = async (id) => {
+    if (!editPassword || editPassword.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+    try {
+      await updateUser(id, { password: editPassword });
+      alert('Password updated successfully');
+      setEditPassword('');
+      setIsUpdatingPassword(false);
+      setEditingId(null);
+    } catch {
+      alert('Failed to update password');
     }
   };
 
@@ -161,28 +179,40 @@ export default function AdminUsersPage() {
                 <td>{u.id}</td>
                 <td style={{ fontWeight: 600 }}>{u.username}</td>
                 <td>{u.email}</td>
-                <td>
+                 <td>
                   {editingId === u.id ? (
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <select className="form-select" value={editRole} onChange={(e) => setEditRole(e.target.value)} style={{ width: 'auto', padding: '0.3rem 0.5rem', fontSize: '0.8rem' }}>
-                        <option value="STUDENT">STUDENT</option>
-                        <option value="INSTRUCTOR">INSTRUCTOR</option>
-                        <option value="ADMIN">ADMIN</option>
-                      </select>
-                      <button className="btn btn-sm btn-success" onClick={() => handleRoleUpdate(u.id)}>Save</button>
-                      <button className="btn btn-sm btn-secondary" onClick={() => setEditingId(null)}>Cancel</button>
+                      {isUpdatingPassword ? (
+                        <>
+                          <input 
+                            type="password" 
+                            className="form-control" 
+                            placeholder="New Password" 
+                            value={editPassword}
+                            onChange={(e) => setEditPassword(e.target.value)}
+                            style={{ width: '150px', padding: '0.3rem 0.5rem', fontSize: '0.8rem' }}
+                          />
+                          <button className="btn btn-sm btn-success" onClick={() => handlePasswordUpdate(u.id)}>Save Pass</button>
+                        </>
+                      ) : (
+                        <>
+                          <select className="form-select" value={editRole} onChange={(e) => setEditRole(e.target.value)} style={{ width: 'auto', padding: '0.3rem 0.5rem', fontSize: '0.8rem' }}>
+                            <option value="STUDENT">STUDENT</option>
+                            <option value="INSTRUCTOR">INSTRUCTOR</option>
+                            <option value="ADMIN">ADMIN</option>
+                          </select>
+                          <button className="btn btn-sm btn-success" onClick={() => handleRoleUpdate(u.id)}>Save Role</button>
+                        </>
+                      )}
+                      <button className="btn btn-sm btn-secondary" onClick={() => { setEditingId(null); setIsUpdatingPassword(false); setEditPassword(''); }}>Cancel</button>
                     </div>
                   ) : (
-                    <span className={`badge ${u.role === 'ADMIN' ? 'badge-error' : u.role === 'INSTRUCTOR' ? 'badge-info' : 'badge-success'}`}>
-                      {u.role}
-                    </span>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button className="btn btn-sm btn-secondary" onClick={() => { setEditingId(u.id); setEditRole(u.role); setIsUpdatingPassword(false); }}>Update Role</button>
+                      <button className="btn btn-sm btn-info" onClick={() => { setEditingId(u.id); setIsUpdatingPassword(true); setEditPassword(''); }}>Change Password</button>
+                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u.id)}>Delete</button>
+                    </div>
                   )}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-sm btn-secondary" onClick={() => { setEditingId(u.id); setEditRole(u.role); }}>Edit Role</button>
-                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u.id)}>Delete</button>
-                  </div>
                 </td>
               </tr>
             ))}

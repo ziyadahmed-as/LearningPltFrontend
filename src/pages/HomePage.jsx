@@ -106,16 +106,16 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#020617] text-white selection:bg-indigo-500/30 selection:text-indigo-200">
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
         {/* Animated Background Slideshow */}
-        <div className="hero-slideshow absolute inset-0 z-0">
+        <div className="hero-slideshow absolute inset-0 z-0 scale-110">
           {heroSlides.map((slide, idx) => (
             <div 
               key={idx}
-              className={`hero-slide ${idx === currentSlide ? 'active' : ''} absolute inset-0 transition-opacity duration-[2000ms] ease-in-out ${idx === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+              className={`hero-slide ${idx === currentSlide ? 'active' : ''} absolute inset-0 transition-all duration-[3000ms] ease-in-out ${idx === currentSlide ? 'opacity-40 scale-100' : 'opacity-0 scale-105'}`}
               style={{ 
                 backgroundImage: `url(${slide.url})`,
                 backgroundPosition: slide.pos,
@@ -124,278 +124,331 @@ export default function HomePage() {
             />
           ))}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/90 via-purple-900/80 to-blue-900/90 z-[1]" />
         
-        {/* Floating Elements */}
+        {/* Modern Mesh Gradient Overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(17,24,39,0)_0%,#020617_100%)] z-[1]" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-950/90 via-slate-950/80 to-purple-950/90 z-[1]" />
+        
+        {/* Animated Background Blobs */}
         <motion.div
-          className="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl z-[2]"
-          animate={{ y: [0, 30, 0], x: [0, 20, 0] }}
-          transition={{ duration: 8, repeat: Infinity }}
+          className="absolute top-1/4 -left-20 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] z-[2]"
+          animate={{ x: [0, 50, 0], y: [0, 100, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
         />
         <motion.div
-          className="absolute bottom-20 right-10 w-32 h-32 bg-purple-400/20 rounded-full blur-2xl z-[2]"
-          animate={{ y: [0, -40, 0], x: [0, -30, 0] }}
-          transition={{ duration: 10, repeat: Infinity }}
+          className="absolute bottom-1/4 -right-20 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[150px] z-[2]"
+          animate={{ x: [0, -70, 0], y: [0, -50, 0], scale: [1, 1.3, 1] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
         />
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-5xl mx-auto text-center space-y-8">
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-6xl mx-auto flex flex-col items-center">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              className="text-center"
             >
-              <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-                Master Entrance Exams &<br />
-                <span className="bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent">
-                  Future Tech Skills
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 shadow-xl">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                <span className="text-xs font-bold tracking-widest uppercase text-indigo-300">Ethiopia's #1 Learning Platform</span>
+              </div>
+
+              <h1 className="text-6xl md:text-8xl font-black mb-8 leading-[1.05] tracking-tight">
+                Master Your Future<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 drop-shadow-sm">
+                  With Every Click
                 </span>
               </h1>
-              <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
-                Discover the premier digital learning platform for Ethiopian students. <br/> Prepare smarter, build your future, and master your goals.
+              
+              <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
+                Discover the premier digital learning destination. Prepare smarter for entrance exams and master high-demand tech skills from industry experts.
               </p>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="flex flex-wrap gap-4 justify-center"
-            >
-              <GradientButton onClick={() => navigate("/register")}>
-                Get Started Free
-              </GradientButton>
-              <GradientButton variant="outline" className="text-white border-white/40 hover:bg-white/10" onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}>
-                Browse Courses
-              </GradientButton>
-            </motion.div>
-
-            {/* Floating Preview Cards */}
-            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16 max-w-4xl mx-auto"
+              transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-wrap gap-6 justify-center"
+            >
+              <button 
+                onClick={() => navigate("/register")}
+                className="group relative px-10 py-5 bg-white text-indigo-950 font-black rounded-2xl overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-100 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="relative z-10 flex items-center gap-2">
+                  Get Started Free <TrendingUp className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </button>
+              
+              <button 
+                onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
+                className="group px-10 py-5 bg-white/5 backdrop-blur-xl border border-white/10 text-white font-black rounded-2xl transition-all hover:bg-white/10 hover:border-white/20 active:scale-95 shadow-2xl"
+              >
+                <span className="flex items-center gap-2">
+                  Browse Courses <BookOpen className="w-5 h-5 opacity-70 group-hover:rotate-12 transition-transform" />
+                </span>
+              </button>
+            </motion.div>
+
+            {/* Premium Preview Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.6 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-24 w-full max-w-4xl"
             >
               {featuredCourses.slice(0, 2).map((course, idx) => (
-                <GlassCard
+                <div
                   key={course.id || idx}
-                  className="p-4 text-left border-white/10 cursor-pointer hover:scale-[1.02] transition-transform"
+                  className="group relative h-40 rounded-3xl overflow-hidden cursor-pointer shadow-2xl transition-all hover:-translate-y-2"
                   onClick={() => course.id && navigate(`/courses/${course.id}`)}
                 >
-                  <div className="flex gap-4">
-                    {course.thumbnail ? (
-                      <img src={course.thumbnail} alt={course.title} className="w-24 h-24 rounded-xl object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-24 h-24 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                        <BookOpen className="w-8 h-8 text-white/60" />
+                  <img src={course.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent p-6 flex flex-col justify-end border border-white/5 rounded-3xl">
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-500/80 text-[10px] font-bold uppercase tracking-wider mb-2 inline-block shadow-lg">{course.category}</span>
+                        <h4 className="text-lg font-bold text-white line-clamp-1 group-hover:text-indigo-300 transition-colors">{course.title}</h4>
+                        <p className="text-white/60 text-xs">{course.instructor_name || course.instructor}</p>
                       </div>
-                    )}
-                    <div className="flex-1">
-                      <h4 className="text-white font-semibold line-clamp-2 mb-2">{course.title}</h4>
-                      <p className="text-white/80 text-xs">{course.instructor_name || course.instructor}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Users className="w-3.5 h-3.5 text-yellow-300" />
-                        <span className="text-white/70 text-xs">
-                          {(course.enrollment_count || course.students || 0).toLocaleString()} students
-                        </span>
+                      <div className="h-10 w-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center group-hover:bg-indigo-500 transition-colors">
+                        <TrendingUp className="w-5 h-5 text-white" />
                       </div>
                     </div>
                   </div>
-                </GlassCard>
+                </div>
               ))}
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 relative bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+      {/* Modern Stats Section */}
+      <section className="py-24 relative z-10 -mt-20">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
             {platformStats.map((stat, idx) => (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                transition={{ duration: 0.8, delay: idx * 0.1 }}
                 viewport={{ once: true }}
+                className="group relative"
               >
-                <GlassCard className="p-6 text-center border-slate-200">
-                  <stat.icon className="w-8 h-8 mx-auto mb-3 text-indigo-600" />
-                  <div className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-1">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative p-8 rounded-3xl bg-white/5 border border-white/5 backdrop-blur-2xl hover:border-white/20 transition-all flex flex-col items-center shadow-2xl">
+                  <div className="p-4 rounded-2xl bg-indigo-500/10 mb-6 group-hover:bg-indigo-500 transition-all group-hover:scale-110">
+                    <stat.icon className="w-8 h-8 text-indigo-400 group-hover:text-white" />
+                  </div>
+                  <div className="text-5xl font-black text-white mb-2 tabular-nums tracking-tight">
                     {stat.value}
                   </div>
-                  <div className="text-gray-600 text-sm font-medium">{stat.label}</div>
-                </GlassCard>
+                  <div className="text-slate-400 text-sm font-bold uppercase tracking-widest">{stat.label}</div>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section id="categories" className="py-24 relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
-              Explore Learning Paths
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Choose from our comprehensive range of courses designed for every stage of your educational journey.
+      {/* Re-designed Categories Section */}
+      <section id="categories" className="py-32 relative bg-[#020617]">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+            <div className="max-w-2xl">
+              <span className="text-indigo-400 font-black uppercase tracking-[0.3em] text-xs mb-4 inline-block">Curated Learning</span>
+              <h2 className="text-4xl md:text-6xl font-black text-white">
+                Premium <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Paths</span>
+              </h2>
+            </div>
+            <p className="text-slate-400 max-w-md text-lg font-light leading-relaxed">
+              Navigate your success through precision-engineered curriculums tailored for the modern Ethiopian landscape.
             </p>
-          </motion.div>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {categories.map((category, idx) => (
               <motion.div
                 key={idx}
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 300 }}
+                whileHover={{ y: -10 }}
+                className="group relative p-1 rounded-3xl bg-gradient-to-b from-white/10 to-transparent hover:from-indigo-500/40 transition-all duration-500"
               >
-                <GlassCard className="p-8 text-center cursor-pointer border-slate-100 group">
-                  <div className={`w-16 h-16 mx-auto mb-6 bg-gradient-to-r ${category.color} rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform`}>
-                    <category.icon className="w-8 h-8 text-white" />
+                <div className="relative h-full p-10 rounded-[calc(1.5rem-1px)] bg-slate-950 border border-white/5 overflow-hidden">
+                  {/* Decorative background circle */}
+                  <div className={`absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-r ${category.color} opacity-10 blur-3xl group-hover:opacity-30 transition-opacity`} />
+                  
+                  <div className={`w-14 h-14 mb-8 bg-gradient-to-r ${category.color} rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all`}>
+                    <category.icon className="w-7 h-7 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{category.title}</h3>
-                  <p className="text-gray-600 text-sm">{category.courses} specialized courses</p>
-                </GlassCard>
+                  <h3 className="text-2xl font-black text-white mb-3 group-hover:text-indigo-400 transition-colors">{category.title}</h3>
+                  <p className="text-slate-400 group-hover:text-slate-300 transition-colors mb-6">{category.courses} specialized courses available now</p>
+                  <div className="flex items-center gap-2 text-xs font-black text-indigo-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">
+                    Explore Path <TrendingUp className="w-4 h-4" />
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Courses Section */}
-      <section id="courses" className="py-24 relative bg-slate-50">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
-              Top Rated Programs
+      {/* High-Impact Programs Grid */}
+      <section id="courses" className="py-32 relative bg-slate-950/50">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-24">
+            <h2 className="text-4xl md:text-6xl font-black text-white mb-8">
+              Expert <span className="text-indigo-500 underline decoration-indigo-500/30 underline-offset-12">Faculty</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Verified high-quality content based on student feedback and national exam results.
-            </p>
-          </motion.div>
+            <div className="flex justify-center gap-4 flex-wrap">
+              {['All', 'Math', 'Tech', 'Science', 'English', 'GAT'].map(tag => (
+                <button key={tag} className="px-6 py-2 rounded-full border border-white/10 hover:bg-white/5 transition-colors text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white">
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
             {featuredCourses.map((course, idx) => (
               <motion.div
                 key={course.id || idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
                 viewport={{ once: true }}
-                className="cursor-pointer"
-                onClick={() => course.id && navigate(`/courses/${course.id}`)}
+                className="group"
               >
-                <CourseCard {...course} />
+                <div 
+                  className="relative rounded-3xl bg-slate-900/40 border border-white/5 overflow-hidden cursor-pointer hover:border-indigo-500/50 transition-all hover:shadow-[0_20px_60px_-15px_rgba(99,102,241,0.3)]"
+                  onClick={() => course.id && navigate(`/courses/${course.id}`)}
+                >
+                  <div className="aspect-[4/5] overflow-hidden relative">
+                    <img src={course.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
+                      <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                      <span className="text-xs font-bold">{course.rating}</span>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-2">{course.category}</div>
+                    <h4 className="text-lg font-bold text-white mb-2 line-clamp-2 leading-snug group-hover:text-indigo-300 transition-colors">{course.title}</h4>
+                    <p className="text-slate-400 text-sm mb-6 font-medium italic">{course.instructor}</p>
+                    <div className="flex justify-between items-center pt-6 border-t border-white/5">
+                      <span className="text-2xl font-black text-white">${course.price}</span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Enrollment</span>
+                        <span className="text-xs font-black text-indigo-400">{(course.students).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Instructor CTA Section */}
-      <section className="py-24 relative">
-        <div className="container mx-auto px-4">
-          <GlassCard className="max-w-5xl mx-auto p-12 overflow-hidden bg-gradient-to-br from-indigo-600 to-purple-700">
-            <div className="relative z-10 text-center">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                viewport={{ once: true }}
-              >
-                <h2 className="text-4xl font-bold text-white mb-4">
-                  Become an Instructor
+      {/* Futuristic Instructor CTA */}
+      <section className="py-40 relative">
+        <div className="container mx-auto px-6">
+          <div className="relative max-w-6xl mx-auto rounded-[3rem] overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-600 to-purple-800 opacity-90" />
+            <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHw0fHxsZWN0dXJlJTIwaGFsbHxlbnwxfHx8fDE3NzQ3MTQ4MDB8MA&ixlib=rb-4.1.0&q=80&w=1080" alt="" className="absolute inset-0 w-full h-full object-cover mix-blend-overlay scale-110 group-hover:scale-100 transition-transform duration-[3000ms]" />
+            
+            <div className="relative z-10 py-32 px-12 text-center md:text-left md:flex items-center justify-between gap-12">
+              <div className="max-w-2xl">
+                <h2 className="text-4xl md:text-6xl font-black text-white mb-8 leading-tight">
+                  Evolve Into An<br />
+                  <span className="text-indigo-200">Instructor Icon</span>
                 </h2>
-                <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-                  Share your knowledge and inspire thousands of students across Ethiopia. Join our community of expert educators.
+                <p className="text-xl text-white/80 mb-12 font-light leading-relaxed">
+                  Join a high-performance ecosystem of educators. Leverage AI-powered tools to create world-class content and impact generations.
                 </p>
-                <button 
-                  onClick={() => navigate("/register")}
-                  className="px-8 py-4 bg-white text-indigo-600 rounded-2xl font-bold text-lg shadow-xl hover:bg-indigo-50 transition-all active:scale-95"
-                >
-                  Start Teaching Today
-                </button>
-              </motion.div>
+                <div className="flex flex-wrap gap-4">
+                   <button 
+                    onClick={() => navigate("/instructor-onboarding")}
+                    className="px-10 py-5 bg-white text-indigo-900 rounded-3xl font-black text-lg shadow-2xl hover:bg-slate-100 transition-all hover:scale-105"
+                  >
+                    Apply to Teach
+                  </button>
+                  <button className="px-10 py-5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-3xl font-black text-lg hover:bg-white/20 transition-all">
+                    How it Works
+                  </button>
+                </div>
+              </div>
+              
+              <div className="hidden lg:grid grid-cols-2 gap-4 flex-shrink-0">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className={`p-4 rounded-3xl bg-white/10 backdrop-blur-md border border-white/10 w-32 h-32 flex flex-col items-center justify-center ${i % 2 === 0 ? 'mt-8' : ''}`}>
+                    <Users className="w-8 h-8 text-white mb-2" />
+                    <span className="text-white font-black">9{i}%</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            {/* Background Decoration */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full -ml-20 -mb-20 blur-3xl" />
-          </GlassCard>
+            
+            <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-32 -mt-32 blur-[100px]" />
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-400/20 rounded-full -ml-32 -mb-32 blur-[100px]" />
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-16 bg-slate-900 border-t border-slate-800">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            <div className="space-y-6">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-white" />
+      {/* Elegant Footer */}
+      <footer className="py-24 bg-[#01040f] border-t border-white/5">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-20 mb-20 text-center md:text-left">
+            <div className="space-y-8">
+              <div onClick={() => navigate("/")} className="cursor-pointer group">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform shadow-[0_0_20px_rgba(99,102,241,0.5)]">
+                    <BookOpen className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-3xl font-black tracking-tighter text-white">FATRA</span>
                 </div>
-                <span className="text-2xl font-bold text-white">
-                  EduTech
-                </span>
               </div>
-              <p className="text-slate-400">
-                The premier digital learning platform dedicated to transforming Ethiopian education through innovation and accessibility.
+              <p className="text-slate-500 leading-relaxed font-medium">
+                The apex of Ethiopian digital education. Empowering minds, bridging gaps, and building futures through world-class interactive learning.
               </p>
-              <div className="flex gap-4">
+              <div className="flex justify-center md:justify-start gap-4">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-indigo-500 hover:border-indigo-500 transition-all cursor-pointer group">
+                    <div className="w-4 h-4 bg-slate-400 group-hover:bg-white rounded-sm" />
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div>
-              <h4 className="text-white font-bold mb-6">Learning Path</h4>
-              <ul className="space-y-4 text-slate-400">
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">Grade 9-10 Prep</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">Grade 11-12 Prep</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">Entrance Exams</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">Programming & AI</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-white font-bold mb-6">Institution</h4>
-              <ul className="space-y-4 text-slate-400">
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">About Our Mission</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">Instructor Registry</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">Blog & Updates</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">Contact Support</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-white font-bold mb-6">Support</h4>
-              <ul className="space-y-4 text-slate-400">
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-indigo-400 transition-colors">FAQ</a></li>
-              </ul>
-            </div>
+            {['Learning Path', 'Institution', 'Support'].map((title, idx) => (
+              <div key={idx}>
+                <h4 className="text-white font-black uppercase tracking-[0.2em] text-xs mb-8">{title}</h4>
+                <ul className="space-y-4">
+                  {(idx === 0 ? ['Grade 9-10 Prep', 'Grade 11-12 Prep', 'Entrance Exams', 'Programming & AI'] : 
+                    idx === 1 ? ['About Our Mission', 'Scholarship Fund', 'Corporate Solutions', 'Contact Registry'] :
+                    ['Resolution Center', 'Safety & Privacy', 'Creator Terms', 'Help & FAQ']).map(link => (
+                    <li key={link}><a href="#" className="text-slate-500 hover:text-indigo-400 transition-colors font-medium text-sm">{link}</a></li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
 
-          <div className="border-t border-slate-800 pt-8 text-center text-slate-500 text-sm">
-            <p>&copy; 2026 EduTech Ethiopia. Powered by Excellence.</p>
+          <div className="border-t border-white/5 pt-12 flex flex-col md:flex-row justify-between items-center gap-8 text-slate-600 text-[10px] font-black uppercase tracking-[0.2em]">
+            <p>&copy; 2026 FATRA ACADEMY ETHIOPIA. ALL RIGHTS RESERVED.</p>
+            <div className="flex gap-8">
+              <a href="#" className="hover:text-white transition-colors">Privacy</a>
+              <a href="#" className="hover:text-white transition-colors">Terms</a>
+              <a href="#" className="hover:text-white transition-colors">Cookies</a>
+            </div>
           </div>
         </div>
       </footer>
     </div>
   );
+
 }

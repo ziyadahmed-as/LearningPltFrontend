@@ -80,327 +80,403 @@ export default function InstructorOnboarding() {
   };
 
   return (
-    <div className="min-h-screen p-6 relative overflow-hidden flex items-center justify-center">
-      {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 opacity-90" style={{ zIndex: 0 }} />
-      <div className="absolute inset-0 bg-cover bg-center opacity-10" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1758599879693-9e06f55a4ded?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxvbmxpbmUlMjBpbnN0cnVjdG9yJTIwdGVhY2hpbmd8ZW58MXx8fHwxNzc0NzE0NzAzfDA&ixlib=rb-4.1.0&q=80&w=1080')", zIndex: 0 }} />
+    <div className="min-h-screen bg-[#020617] text-white selection:bg-indigo-500/30 selection:text-indigo-200 p-6 relative overflow-hidden flex items-center justify-center font-sans tracking-tight">
       
-      {/* Floating Elements */}
+      {/* Dynamic Background Elements */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.15)_0%,transparent_50%)] z-0" />
+      <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.02] z-0" />
+      
+      {/* Animated Blobs */}
       <motion.div
-        className="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl"
-        animate={{ y: [0, 30, 0], x: [0, 20, 0] }}
-        transition={{ duration: 8, repeat: Infinity }}
+        className="absolute top-20 left-10 w-96 h-96 bg-indigo-600/10 rounded-full blur-[100px]"
+        animate={{ y: [0, 50, 0], x: [0, 30, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        style={{ zIndex: 0 }}
+      />
+      <motion.div
+        className="absolute bottom-20 right-10 w-[500px] h-[500px] bg-purple-600/5 rounded-full blur-[120px]"
+        animate={{ y: [0, -60, 0], x: [0, -40, 0] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
         style={{ zIndex: 0 }}
       />
 
-      <div className="relative z-10 w-full max-w-3xl mx-auto">
+      <div className="relative z-10 w-full max-w-4xl mx-auto py-12">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 mb-4 cursor-pointer" onClick={() => navigate("/")}>
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
-                <BookOpen className="w-8 h-8 text-indigo-600" />
+          {/* Header */}
+          <div className="text-center mb-12">
+            <motion.div 
+              className="inline-flex items-center gap-3 mb-8 cursor-pointer group" 
+              onClick={() => navigate("/")}
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="w-14 h-14 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.4)] group-hover:rotate-6 transition-transform">
+                <BookOpen className="w-8 h-8 text-white" />
               </div>
-              <span className="text-3xl font-bold text-white">
-                Fatra Academy
+              <span className="text-4xl font-black text-white tracking-tighter">
+                FATRA
               </span>
-            </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Become an Instructor</h1>
-            <p className="text-white/80">Join our community of expert educators and inspire thousands</p>
+            </motion.div>
+            <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight leading-tight">Join the Elite Faculty</h1>
+            <p className="text-slate-400 text-lg max-w-xl mx-auto font-light leading-relaxed">Shape the future of education in Ethiopia. Share your expertise with over 50k+ students globally.</p>
           </div>
 
           {step !== 4 ? (
-            <>
-              {/* Progress Indicator */}
-              <GlassCard className="p-6 mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Step {step} of 3</span>
-                  <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{Math.round((step / 3) * 100)}% Complete</span>
-                </div>
-                <div className="w-full bg-gray-700/30 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-purple-500 to-indigo-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(step / 3) * 100}%` }}
-                  />
-                </div>
-              </GlassCard>
-
-              {/* Form */}
-              <GlassCard className="p-8">
-                {error && <div className="alert alert-error mb-4">{error}</div>}
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {step === 1 && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4 }}
-                      className="space-y-6"
-                    >
-                      <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>Personal Information</h2>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="form-group mb-0">
-                          <label className="form-label" style={{ color: "var(--text-primary)" }}>First Name *</label>
-                          <input
-                            type="text"
-                            placeholder="Jane"
-                            value={formData.first_name}
-                            onChange={(e) => setFormData({...formData, first_name: e.target.value})}
-                            className="form-input bg-white/5 border-white/10 text-white"
-                            required
-                          />
-                        </div>
-                        <div className="form-group mb-0">
-                          <label className="form-label" style={{ color: "var(--text-primary)" }}>Last Name *</label>
-                          <input
-                            type="text"
-                            placeholder="Smith"
-                            value={formData.last_name}
-                            onChange={(e) => setFormData({...formData, last_name: e.target.value})}
-                            className="form-input bg-white/5 border-white/10 text-white"
-                            required
-                          />
-                        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Left Column: Progress & Info */}
+              <div className="lg:col-span-4 space-y-6">
+                <GlassCard className="p-8 bg-slate-900/40 border-white/5 backdrop-blur-3xl rounded-[2rem]">
+                   <h3 className="text-xs font-black text-indigo-400 uppercase tracking-[0.3em] mb-6">Application Status</h3>
+                   <div className="space-y-8">
+                     {[1,2,3].map((s) => (
+                       <div key={s} className="flex items-center gap-4">
+                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center border font-black transition-all duration-500 ${step === s ? 'bg-indigo-500 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.4)] text-white scale-110' : step > s ? 'bg-green-500/20 border-green-500/50 text-green-400' : 'bg-white/5 border-white/10 text-slate-500'}`}>
+                           {step > s ? <CheckCircle className="w-5 h-5" /> : s}
+                         </div>
+                         <div>
+                            <p className={`text-sm font-bold uppercase tracking-wider ${step === s ? 'text-white' : 'text-slate-500'}`}>
+                              {s === 1 ? 'Personal' : s === 2 ? 'Professional' : 'Proposal'}
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-medium">
+                               {step === s ? 'Current Section' : step > s ? 'Complete' : 'Pending'}
+                            </p>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                   
+                   <div className="mt-12 pt-8 border-t border-white/5">
+                      <div className="flex justify-between items-end mb-2">
+                        <span className="text-[10px] font-black text-indigo-400 uppercase">Overall Progress</span>
+                        <span className="text-lg font-black">{Math.round((step / 3) * 100)}%</span>
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="form-group mb-0">
-                          <label className="form-label" style={{ color: "var(--text-primary)" }}>Username *</label>
-                          <input
-                            type="text"
-                            placeholder="janesmith123"
-                            value={formData.username}
-                            onChange={(e) => setFormData({...formData, username: e.target.value})}
-                            className="form-input bg-white/5 border-white/10 text-white"
-                            required
-                          />
-                        </div>
-                        <div className="form-group mb-0">
-                          <label className="form-label" style={{ color: "var(--text-primary)" }}>Email Address *</label>
-                          <input
-                            type="email"
-                            placeholder="jane.smith@email.com"
-                            value={formData.email}
-                            onChange={(e) => setFormData({...formData, email: e.target.value})}
-                            className="form-input bg-white/5 border-white/10 text-white"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="form-group mb-0">
-                          <label className="form-label" style={{ color: "var(--text-primary)" }}>Password *</label>
-                          <input
-                            type="password"
-                            placeholder="••••••••"
-                            value={formData.password}
-                            onChange={(e) => setFormData({...formData, password: e.target.value})}
-                            className="form-input bg-white/5 border-white/10 text-white"
-                            required
-                          />
-                        </div>
-                        <div className="form-group mb-0">
-                          <label className="form-label" style={{ color: "var(--text-primary)" }}>Confirm Password *</label>
-                          <input
-                            type="password"
-                            placeholder="••••••••"
-                            value={formData.password_confirm}
-                            onChange={(e) => setFormData({...formData, password_confirm: e.target.value})}
-                            className="form-input bg-white/5 border-white/10 text-white"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label" style={{ color: "var(--text-primary)" }}>Bio *</label>
-                        <textarea
-                          placeholder="Tell us about yourself, your teaching philosophy, and why you want to teach..."
-                          value={formData.bio}
-                          onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                          className="form-textarea bg-white/5 border-white/10 text-white min-h-[120px]"
-                          required
+                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                        <motion.div 
+                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(step / 3) * 100}%` }}
+                          transition={{ duration: 1 }}
                         />
                       </div>
-                    </motion.div>
-                  )}
-
-                  {step === 2 && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4 }}
-                      className="space-y-6"
-                    >
-                      <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>Professional Experience</h2>
-                      
-                      <div className="form-group">
-                        <label className="form-label" style={{ color: "var(--text-primary)" }}>Area of Expertise *</label>
-                        <input
-                          type="text"
-                          placeholder="e.g., Advanced Mathematics, Computer Science, Physics"
-                          value={formData.expertise}
-                          onChange={(e) => setFormData({...formData, expertise: e.target.value})}
-                          className="form-input bg-white/5 border-white/10 text-white"
-                          required
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="form-group">
-                          <label className="form-label" style={{ color: "var(--text-primary)" }}>Education Qualification *</label>
-                          <input
-                            type="text"
-                            placeholder="Ph.D. in Computer Science, MIT"
-                            value={formData.education}
-                            onChange={(e) => setFormData({...formData, education: e.target.value})}
-                            className="form-input bg-white/5 border-white/10 text-white"
-                            required
-                          />
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label" style={{ color: "var(--text-primary)" }}>Years of Teaching Experience *</label>
-                          <input
-                            type="number"
-                            placeholder="e.g., 10"
-                            value={formData.experience}
-                            onChange={(e) => setFormData({...formData, experience: e.target.value})}
-                            className="form-input bg-white/5 border-white/10 text-white"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="form-group">
-                          <label className="form-label" style={{ color: "var(--text-primary)" }}>LinkedIn Profile</label>
-                          <input
-                            type="url"
-                            placeholder="https://linkedin.com/in/yourprofile"
-                            value={formData.linkedin}
-                            onChange={(e) => setFormData({...formData, linkedin: e.target.value})}
-                            className="form-input bg-white/5 border-white/10 text-white"
-                          />
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label" style={{ color: "var(--text-primary)" }}>Portfolio/Website</label>
-                          <input
-                            type="url"
-                            placeholder="https://yourwebsite.com"
-                            value={formData.portfolio}
-                            onChange={(e) => setFormData({...formData, portfolio: e.target.value})}
-                            className="form-input bg-white/5 border-white/10 text-white"
-                          />
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {step === 3 && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4 }}
-                      className="space-y-6"
-                    >
-                      <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>Course Proposal & Documents</h2>
-                      
-                      <div className="form-group">
-                        <label className="form-label" style={{ color: "var(--text-primary)" }}>Proposed Courses *</label>
-                        <textarea
-                          placeholder="Describe the courses you want to create (topics, target audience, course structure)..."
-                          value={formData.proposedCourses}
-                          onChange={(e) => setFormData({...formData, proposedCourses: e.target.value})}
-                          className="form-textarea bg-white/5 border-white/10 text-white min-h-[160px]"
-                          required
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label" style={{ color: "var(--text-primary)" }}>Upload CV/Resume *</label>
-                        <div className="relative mt-2">
-                          <input
-                            id="cv"
-                            type="file"
-                            accept=".pdf,.doc,.docx"
-                            onChange={handleFileChange}
-                            className="hidden"
-                            required
-                          />
-                          <label
-                            htmlFor="cv"
-                            className="flex items-center justify-center gap-2 px-6 py-6 bg-white/5 border-2 border-dashed border-white/20 rounded-xl hover:bg-white/10 cursor-pointer transition-colors"
-                          >
-                            <Upload className="w-6 h-6 text-indigo-400" />
-                            <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
-                              {formData.cvFile ? formData.cvFile.name : "Click to upload (PDF, DOC, DOCX)"}
-                            </span>
-                          </label>
-                        </div>
-                      </div>
-
-                      <div className="bg-indigo-900/30 border border-indigo-500/30 rounded-xl p-5 mt-6">
-                        <h4 className="font-semibold text-indigo-300 mb-2 text-sm uppercase tracking-wider">What happens next?</h4>
-                        <ul className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                          <li className="flex gap-2"><span>•</span> Our team will review your application within 3-5 business days</li>
-                          <li className="flex gap-2"><span>•</span> You'll receive an email with the decision</li>
-                          <li className="flex gap-2"><span>•</span> If approved, you'll get access to our instructor dashboard</li>
-                          <li className="flex gap-2"><span>•</span> Start creating and publishing your courses!</li>
-                        </ul>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  <div className="flex gap-3 pt-6 mt-6 border-t border-white/10">
-                    {step > 1 && (
-                      <GradientButton
-                        type="button"
-                        variant="secondary"
-                        onClick={() => setStep(step - 1)}
-                        className="flex-1"
-                      >
-                        Back
-                      </GradientButton>
-                    )}
-                    <GradientButton type="submit" className="flex-1" disabled={loading}>
-                      {loading ? "Processing..." : (step === 3 ? "Submit Application" : "Continue")}
-                    </GradientButton>
+                   </div>
+                </GlassCard>
+                
+                <div className="p-1 rounded-[2rem] bg-gradient-to-br from-indigo-500/20 to-transparent">
+                  <div className="p-8 rounded-[calc(2rem-1px)] bg-slate-950/40 border border-white/5 backdrop-blur-md">
+                    <h4 className="text-white font-black text-sm uppercase tracking-widest mb-4">Instructor Benefits</h4>
+                    <ul className="space-y-4">
+                      {[
+                        'Industry-Leading Revenue Share',
+                        'AI-Assisted Content Creation',
+                        'Deep Analytic Dashboards',
+                        'Global Exposure & Certification'
+                      ].map((benefit, i) => (
+                        <li key={i} className="flex items-center gap-3 text-xs text-slate-400 font-medium leading-tight">
+                           <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
+                           {benefit}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </form>
-              </GlassCard>
-            </>
+                </div>
+              </div>
+
+              {/* Right Column: Form */}
+              <div className="lg:col-span-8">
+                <GlassCard className="p-10 bg-slate-900/60 border-white/10 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)]">
+                  {error && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-bold flex items-center gap-3 mb-8"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center flex-shrink-0">!</div>
+                      {error}
+                    </motion.div>
+                  )}
+                  
+                  <form onSubmit={handleSubmit} className="space-y-8">
+                    {step === 1 && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 40 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -40 }}
+                        className="space-y-8"
+                      >
+                        <h2 className="text-2xl font-black text-white">Identity & Access</h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">First Name</label>
+                            <input
+                              type="text"
+                              value={formData.first_name}
+                              onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium"
+                              placeholder="Jane"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Last Name</label>
+                            <input
+                              type="text"
+                              value={formData.last_name}
+                              onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium"
+                              placeholder="Smith"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Username</label>
+                            <input
+                              type="text"
+                              value={formData.username}
+                              onChange={(e) => setFormData({...formData, username: e.target.value})}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium"
+                              placeholder="dr_smith"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
+                            <input
+                              type="email"
+                              value={formData.email}
+                              onChange={(e) => setFormData({...formData, email: e.target.value})}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium"
+                              placeholder="jane@academy.edu"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Password</label>
+                            <input
+                              type="password"
+                              value={formData.password}
+                              onChange={(e) => setFormData({...formData, password: e.target.value})}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium"
+                              placeholder="••••••••"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Confirm Password</label>
+                            <input
+                              type="password"
+                              value={formData.password_confirm}
+                              onChange={(e) => setFormData({...formData, password_confirm: e.target.value})}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium"
+                              placeholder="••••••••"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Professional Bio</label>
+                          <textarea
+                            value={formData.bio}
+                            onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium min-h-[140px]"
+                            placeholder="Briefly describe your academic background and teaching style..."
+                            required
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {step === 2 && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 40 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="space-y-8"
+                      >
+                        <h2 className="text-2xl font-black text-white">Professional Vertical</h2>
+                        
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary Domain Expertise</label>
+                          <input
+                            type="text"
+                            value={formData.expertise}
+                            onChange={(e) => setFormData({...formData, expertise: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium"
+                            placeholder="e.g. Theoretical Physics, ML Engineering"
+                            required
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Education Level</label>
+                            <input
+                              type="text"
+                              value={formData.education}
+                              onChange={(e) => setFormData({...formData, education: e.target.value})}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium"
+                              placeholder="Ph.D., M.Sc., etc."
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Years of Experience</label>
+                            <input
+                              type="number"
+                              value={formData.experience}
+                              onChange={(e) => setFormData({...formData, experience: e.target.value})}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium"
+                              placeholder="10"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">LinkedIn URL</label>
+                            <input
+                              type="url"
+                              value={formData.linkedin}
+                              onChange={(e) => setFormData({...formData, linkedin: e.target.value})}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium"
+                              placeholder="https://linkedin.com/..."
+                            />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Portfolio/CV Link</label>
+                            <input
+                              type="url"
+                              value={formData.portfolio}
+                              onChange={(e) => setFormData({...formData, portfolio: e.target.value})}
+                              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium"
+                              placeholder="https://yourpage.com"
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {step === 3 && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 40 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="space-y-8"
+                      >
+                        <h2 className="text-2xl font-black text-white">Course Proposal</h2>
+                        
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Detailed Proposal</label>
+                          <textarea
+                            value={formData.proposedCourses}
+                            onChange={(e) => setFormData({...formData, proposedCourses: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-medium min-h-[180px]"
+                            placeholder="List potential course titles and briefly explain their scope..."
+                            required
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Verify Credentials (PDF/DOC)</label>
+                          <div className="relative group/file">
+                            <input
+                              id="cv"
+                              type="file"
+                              accept=".pdf,.doc,.docx"
+                              onChange={handleFileChange}
+                              className="hidden"
+                              required
+                            />
+                            <label
+                              htmlFor="cv"
+                              className="flex flex-col items-center justify-center gap-4 px-8 py-12 bg-white/5 border-2 border-dashed border-white/10 rounded-[2rem] hover:bg-white/10 hover:border-indigo-500/50 cursor-pointer transition-all duration-300"
+                            >
+                              <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center group-hover/file:scale-110 transition-transform">
+                                <Upload className="w-8 h-8 text-indigo-400" />
+                              </div>
+                              <div className="text-center">
+                                <p className="text-white font-bold">{formData.cvFile ? formData.cvFile.name : "Click or Drop CV to Upload"}</p>
+                                <p className="text-slate-500 text-xs font-medium mt-1">Maximum file size: 10MB</p>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    <div className="flex gap-4 pt-10 mt-10 border-t border-white/5">
+                      {step > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setStep(step - 1)}
+                          className="flex-1 py-4 px-6 rounded-2xl bg-white/5 border border-white/10 text-white font-black hover:bg-white/10 transition-all active:scale-95"
+                        >
+                          Previous
+                        </button>
+                      )}
+                      <button 
+                        type="submit" 
+                        disabled={loading}
+                        className="flex-[2] relative group py-4 px-6 rounded-2xl bg-white text-indigo-950 font-black overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xl disabled:opacity-50"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-100 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          {loading ? (
+                            <div className="w-6 h-6 border-4 border-indigo-950/20 border-t-indigo-950 rounded-full animate-spin" />
+                          ) : (
+                            <>
+                              {step === 3 ? "Submit Global Application" : "Progress to Next Step"}
+                              <TrendingUp className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                            </>
+                          )}
+                        </span>
+                      </button>
+                    </div>
+                  </form>
+                </GlassCard>
+              </div>
+            </div>
           ) : (
-            /* Success Message */
-            <GlassCard className="p-12 text-center">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.5, type: "spring" }}
+            /* Success State */
+            <GlassCard className="p-20 text-center bg-slate-900/40 border-white/5 backdrop-blur-3xl rounded-[3rem] max-w-2xl mx-auto shadow-2xl relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-emerald-600" />
+               <motion.div
+                initial={{ scale: 0, rotate: -45 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ duration: 0.8, type: "spring" }}
               >
-                <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle className="w-12 h-12 text-green-400" />
+                <div className="w-28 h-28 bg-green-500/20 rounded-[2rem] flex items-center justify-center mx-auto mb-10 shadow-[0_0_50px_rgba(34,197,94,0.3)]">
+                  <CheckCircle className="w-14 h-14 text-green-400" />
                 </div>
               </motion.div>
               
-              <h2 className="text-3xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>Application Submitted!</h2>
-              <p className="text-lg mb-8 max-w-md mx-auto" style={{ color: "var(--text-secondary)" }}>
-                Thank you for applying to become an instructor on Fatra Academy. We'll review your application and get back to you within 3-5 business days.
+              <h2 className="text-4xl font-black text-white mb-6">Success, Instructor!</h2>
+              <p className="text-xl text-slate-400 mb-12 font-light leading-relaxed">
+                Your application has been received. Our review committee will evaluate your credentials within 72 hours. Check your inbox for the next steps.
               </p>
               
-              <div className="flex gap-3 justify-center">
-                <GradientButton onClick={() => navigate("/")}>
-                  Back to Home
-                </GradientButton>
-                <GradientButton variant="secondary" onClick={() => navigate("/login")}>
-                  Sign In
-                </GradientButton>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button 
+                  onClick={() => navigate("/")}
+                  className="px-8 py-4 bg-white text-indigo-950 font-black rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all"
+                >
+                  Return to Hub
+                </button>
+                <button 
+                  onClick={() => navigate("/login")}
+                  className="px-8 py-4 bg-white/5 border border-white/10 text-white font-black rounded-2xl hover:bg-white/10 active:scale-95 transition-all"
+                >
+                  Enter Account
+                </button>
               </div>
             </GlassCard>
           )}
@@ -409,3 +485,4 @@ export default function InstructorOnboarding() {
     </div>
   );
 }
+

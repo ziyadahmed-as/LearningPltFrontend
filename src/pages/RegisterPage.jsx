@@ -45,8 +45,12 @@ export default function RegisterPage() {
             value={form.role}
             onChange={(e) => {
               const val = e.target.value;
-              update('role', val);
-              setIsInstructorMode(val === 'INSTRUCTOR');
+              if (val === 'INSTRUCTOR') {
+                navigate('/instructor-onboarding');
+              } else {
+                update('role', val);
+                setIsInstructorMode(false);
+              }
             }}
           >
             <option value="STUDENT">🎓 Student - I want to learn</option>
@@ -90,31 +94,7 @@ export default function RegisterPage() {
             <input className="form-input" type="password" value={form.password_confirm} onChange={(e) => update('password_confirm', e.target.value)} required />
           </div>
 
-          {isInstructorMode && (
-            <div className="fade-in" style={{ 
-              padding: '1.5rem', 
-              background: 'var(--bg-elevated)', 
-              borderRadius: 'var(--radius-xl)', 
-              border: '1px solid var(--border-subtle)',
-              marginBottom: '2rem'
-            }}>
-              <h4 style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--accent-primary)', textTransform: 'uppercase' }}>Professional Qualifications</h4>
-              <div className="form-group">
-                <label className="form-label">Expertise / Subject Matter</label>
-                <input className="form-input" placeholder="e.g. Full-stack Development, Calculus" value={form.expertise} onChange={(e) => update('expertise', e.target.value)} required={isInstructorMode} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Education Level</label>
-                  <input className="form-input" placeholder="e.g. Master's in CS" value={form.education_level} onChange={(e) => update('education_level', e.target.value)} required={isInstructorMode} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Years of Experience</label>
-                  <input className="form-input" type="number" value={form.years_of_experience} onChange={(e) => update('years_of_experience', parseInt(e.target.value) || 0)} required={isInstructorMode} />
-                </div>
-              </div>
-            </div>
-          )}
+
 
           <button className="btn btn-primary btn-block" type="submit" disabled={loading}>
             {loading ? 'Processing...' : isInstructorMode ? 'Submit Application' : 'Create Account'}

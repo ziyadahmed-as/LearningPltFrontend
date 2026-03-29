@@ -151,7 +151,7 @@
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   background-size: 140% auto;
-  background-position: center;
+  background-position: left center;
   z-index: 0;
   animation: panorama 40s linear infinite alternate;
 }
@@ -164,42 +164,49 @@
 .hero-overlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(135deg, rgba(8, 8, 16, 0.9) 0%, rgba(8, 8, 16, 0.6) 50%, rgba(8, 8, 16, 0.8) 100%);
+  background: linear-gradient(90deg, 
+    rgba(30, 27, 75, 0.98) 0%, 
+    rgba(30, 27, 75, 0.85) 25%, 
+    rgba(30, 27, 75, 0.4) 60%, 
+    rgba(255, 255, 255, 0.1) 100%
+  );
   z-index: 1;
 }
 
 .hero-content {
   position: relative;
   z-index: 2;
-  padding: var(--space-4xl) var(--space-lg);
-  max-width: 900px;
+  text-align: left;
+  max-width: 800px;
+  margin-left: 0;
+  padding: var(--space-4xl) 0;
   animation: heroTextSlide 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes heroTextSlide {
-  from { opacity: 0; transform: translateX(50px); filter: blur(10px); }
+  from { opacity: 0; transform: translateX(-50px); filter: blur(10px); }
   to { opacity: 1; transform: translateX(0); filter: blur(0); }
 }
 
 .hero-title {
-  font-size: 3.5rem;
+  font-size: 3.8rem;
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 1.05;
   margin-bottom: var(--space-xl);
   letter-spacing: -0.04em;
 }
 
 .hero-subtitle {
-  font-size: 1.25rem;
-  max-width: 700px;
-  margin: 0 auto var(--space-2xl);
+  font-size: 1.35rem;
+  max-width: 650px;
+  margin: 0 0 var(--space-2xl);
   line-height: 1.6;
 }
 
 .hero-buttons {
   display: flex;
-  gap: var(--space-md);
-  justify-content: center;
+  gap: var(--space-lg);
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 

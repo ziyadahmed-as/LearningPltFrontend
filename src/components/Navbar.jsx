@@ -15,7 +15,6 @@ export default function Navbar({ onHelpClick }) {
         </Link>
         <div className="navbar-links">
           <Link to="/courses">Courses</Link>
-          <Link to="/#live">Live Classes</Link>
           {user ? (
             <>
               {user.role === 'STUDENT' && <Link to="/my-enrollments">My Enrollments</Link>}

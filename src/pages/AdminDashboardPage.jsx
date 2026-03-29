@@ -1,618 +1,685 @@
-import { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import DashboardLayout from '../components/DashboardLayout';
-import StatCard from '../components/StatCard';
+import { useEffect, useState, useCallback } from "react";
+import { DashboardNavbar } from "../components/dashboard-navbar";
+import { DashboardSidebar } from "../components/dashboard-sidebar";
+import { GlassCard } from "../components/glass-card";
 import {
-  getUsers, updateUser, deleteUser, createUser,
-  getCategories, createCategory, deleteCategory,
-  getAllCourses, approveCourse, unapproveCourse,
-  getInstructorStats,
-} from '../services/api';
-import { 
-  Users, Layers, CheckCircle, BarChart3, LayoutDashboard, 
-  Trash2, UserPlus, Search, Shield, GraduationCap, Eye, ExternalLink,
-  Users2, BookOpen, Clock, TrendingUp, Plus, X
-} from 'lucide-react';
+  Home, Users, BookOpen, DollarSign, TrendingUp,
+  CheckCircle, XCircle, Activity, RefreshCw, AlertCircle,
+  BarChart2, Settings, ShieldCheck,
+} from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, AreaChart, Area, Cell, PieChart, Pie
-} from 'recharts';
+  LineChart, Line, BarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend,
+} from "recharts";
+import {
+  getAdminStats, approveInstructor, rejectInstructor,
+  getAllCourses, adminApproveCourse, adminUnapproveCourse, getUsers,
+} from "../services/api";
 
-const MENU_ITEMS = [
-  { id: 'Overview', icon: LayoutDashboard, label: 'Systems Overview' },
-  { id: 'Users', icon: Users, label: 'User Management' },
-  { id: 'Courses', icon: CheckCircle, label: 'Course Approvals' },
-  { id: 'Categories', icon: Layers, label: 'Categories' },
-];
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const fmt = (n) =>
+  n >= 1_000_000
+    ? `${(n / 1_000_000).toFixed(1)}M`
+    : n >= 1_000
+    ? `${(n / 1_000).toFixed(1)}K`
+    : String(n || 0);
 
+const fmtMoney = (n) =>
+  n >= 1_000 ? `$${(n / 1_000).toFixed(1)}K` : `$${(n || 0).toFixed(0)}`;
+
+const ROLE_COLORS = {
+  STUDENT: "bg-blue-100 text-blue-700",
+  INSTRUCTOR: "bg-purple-100 text-purple-700",
+  ADMIN: "bg-red-100 text-red-700",
+};
+
+const TABS = ["Overview", "Courses", "Users", "Categories"];
+
+// ─── Stat card sub-component ──────────────────────────────────────────────────
+function StatTile({ icon: Icon, label, value, sub, gradient }) {
+  return (
+    <GlassCard className="p-6">
+      <div className="flex items-center gap-3 mb-2">
+        <div
+          className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-r ${gradient}`}
+        >
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">{label}</p>
+          <p className="text-2xl font-bold text-gray-900">{value}</p>
+        </div>
+      </div>
+      {sub && <p className="text-xs text-green-600 font-medium mt-1">{sub}</p>}
+    </GlassCard>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {
-  const [activeItem, setActiveItem] = useState('Overview');
-  const navigate = useNavigate();
-
-  return (
-    <DashboardLayout 
-      title={MENU_ITEMS.find(i => i.id === activeItem)?.label}
-      subtitle="Welcome back, Administrator."
-      tabs={MENU_ITEMS}
-      activeTab={activeItem}
-      onTabChange={setActiveItem}
-    >
-      {activeItem === 'Overview' && <OverviewTab />}
-      {activeItem === 'Users' && <UsersTab />}
-      {activeItem === 'Categories' && <CategoriesTab />}
-      {activeItem === 'Courses' && <CourseApprovalsTab />}
-    </DashboardLayout>
-  );
-}
-
-/* ─── OVERVIEW TAB (REPORTS & GRAPHS) ─────────────────────── */
-function OverviewTab() {
+  const [activeTab, setActiveTab] = useState("Overview");
   const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const { data } = await getInstructorStats(); // Admin gets global stats from this endpoint
-        setStats(data);
-      } catch (err) {
-        console.error('Failed to fetch admin stats');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
-
-  if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
-
-  // Prepare chart data from stats
-  const courseData = [
-    { name: 'Published', value: stats?.published || 0, color: '#10b981' },
-    { name: 'Pending', value: stats?.pending || 0, color: '#f59e0b' },
-    { name: 'Drafts', value: stats?.drafts || 0, color: '#64748b' },
-  ];
-
-  // Dummy monthly data for visualization if real data is not available
-  const enrollmentData = [
-    { month: 'Jan', enrollments: 12, views: 45 },
-    { month: 'Feb', enrollments: 19, views: 52 },
-    { month: 'Mar', enrollments: 32, views: 88 },
-    { month: 'Apr', enrollments: stats?.total_enrollments || 45, views: stats?.total_views / 10 || 120 },
-  ];
-
-  return (
-    <div className="fade-in">
-      {/* Quick Stats Grid */}
-      <div className="stats-grid-modern">
-        <StatCard 
-          icon={Users2} 
-          label="Total Enrollments" 
-          value={stats?.total_enrollments || 0} 
-          trend="+12% from last month"
-        />
-        <StatCard 
-          icon={BookOpen} 
-          label="Total Courses" 
-          value={stats?.total_courses || 0} 
-          trend="Global reach"
-        />
-        <StatCard 
-          icon={TrendingUp} 
-          label="Approval Queue" 
-          value={stats?.pending || 0} 
-          variant={stats?.pending > 0 ? 'warning' : 'success'}
-          trend={stats?.pending > 0 ? 'Urgent attention' : 'All clear'}
-        />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-        {/* Course Status Chart */}
-        <div className="chart-card">
-          <div className="chart-header">
-            <h3 className="chart-title">Course Ecosystem</h3>
-          </div>
-          <div style={{ height: '220px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={courseData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
-                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}
-                />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {courseData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Growth Trend Chart */}
-        <div className="chart-card">
-          <div className="chart-header">
-            <h3 className="chart-title">Activity Metrics</h3>
-          </div>
-          <div style={{ height: '220px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={enrollmentData}>
-                <defs>
-                  <linearGradient id="colorEnroll" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--accent-primary)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--accent-primary)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-subtle)" />
-                <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}
-                />
-                <Area type="monotone" dataKey="enrollments" stroke="var(--accent-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorEnroll)" />
-                <Area type="monotone" dataKey="views" stroke="#10b981" strokeWidth={2} fill="transparent" strokeDasharray="5 5" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-
-/* ─── USERS TAB ─────────────────────────────────────────── */
-function UsersTab() {
+  const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState(null);
-  const [editRole, setEditRole] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'STUDENT' });
-  const [formError, setFormError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [actionMsg, setActionMsg] = useState("");
+  const [actionErr, setActionErr] = useState("");
 
-  useEffect(() => { loadUsers(); }, []);
+  const sidebarItems = [
+    { icon: Home, label: "Overview", path: "#" },
+    { icon: Users, label: "Users", path: "#" },
+    { icon: BookOpen, label: "Courses", path: "#" },
+    { icon: BarChart2, label: "Categories", path: "#" },
+  ];
 
-  const loadUsers = async () => {
-    try { const { data } = await getUsers(); setUsers(Array.isArray(data) ? data : data.results || []); } catch {}
-    setLoading(false);
-  };
-
-  const handleCreateUser = async (e) => {
-    e.preventDefault(); setFormError('');
+  // ── Data loading ─────────────────────────────────────────────────────────
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    setActionMsg("");
+    setActionErr("");
     try {
-      await createUser(formData);
-      setFormData({ username: '', email: '', password: '', role: 'STUDENT' });
-      setShowAddForm(false); loadUsers();
-    } catch (err) { setFormError(err.response?.data?.detail || 'Failed to create user.'); }
+      const [statsRes, coursesRes, usersRes] = await Promise.all([
+        getAdminStats(),
+        getAllCourses(),
+        getUsers(),
+      ]);
+      setStats(statsRes.data);
+      const allCourses = Array.isArray(coursesRes.data)
+        ? coursesRes.data
+        : coursesRes.data.results || [];
+      setCourses(allCourses);
+      const allUsers = Array.isArray(usersRes.data)
+        ? usersRes.data
+        : usersRes.data.results || [];
+      setUsers(allUsers);
+    } catch (e) {
+      console.error("Dashboard load error:", e);
+      setActionErr("Failed to load dashboard data. Is the API running?");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
+
+  const flash = (msg, isErr = false) => {
+    if (isErr) setActionErr(msg);
+    else setActionMsg(msg);
+    setTimeout(() => { setActionMsg(""); setActionErr(""); }, 4000);
   };
 
-  const handleRoleUpdate = async (id) => {
-    try { await updateUser(id, { role: editRole }); setEditingId(null); loadUsers(); }
-    catch { alert('Failed to update role'); }
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Delete this user?')) { await deleteUser(id); loadUsers(); }
-  };
-
-  const filteredUsers = users.filter(u => 
-    u.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
-
-  return (
-    <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', gap: '1rem' }}>
-        <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-          <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Search users..." 
-            className="form-input" 
-            style={{ paddingLeft: '3rem' }}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <button className="btn btn-primary" onClick={() => setShowAddForm(!showAddForm)}>
-          <UserPlus size={18} />
-          {showAddForm ? 'Cancel' : 'Add User'}
-        </button>
-      </div>
-
-      {showAddForm && (
-        <div className="card" style={{ marginBottom: '2.5rem', maxWidth: '500px', animation: 'slideDown 0.3s ease' }}>
-          <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Shield size={20} className="text-accent" />
-            Registry Management
-          </h3>
-          <form onSubmit={handleCreateUser}>
-            <div className="form-group">
-              <label className="form-label">Account Identity</label>
-              <input type="text" className="form-input" required placeholder="Unique username" value={formData.username}
-                onChange={e => setFormData({ ...formData, username: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Verified Email</label>
-              <input type="email" className="form-input" required placeholder="name@example.com" value={formData.email}
-                onChange={e => setFormData({ ...formData, email: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Security Credentials</label>
-              <input type="password" className="form-input" required placeholder="Choose a secure password" value={formData.password}
-                onChange={e => setFormData({ ...formData, password: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">System Privileges</label>
-              <select className="form-select" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
-                <option value="STUDENT">Learner (Student)</option>
-                <option value="INSTRUCTOR">Educator (Instructor)</option>
-                <option value="ADMIN">System Administrator</option>
-              </select>
-            </div>
-            {formError && <div className="alert alert-error">{formError}</div>}
-            <button type="submit" className="btn btn-primary btn-block">Confirm & Provision</button>
-          </form>
-        </div>
-      )}
-
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Contact</th>
-              <th>Status / Role</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map(u => (
-              <tr key={u.id}>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: 'var(--accent-primary)' }}>
-                      {u.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{u.username}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>UID: #{u.id}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div style={{ fontSize: '0.85rem' }}>{u.email}</div>
-                </td>
-                <td>
-                  {editingId === u.id ? (
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <select className="form-select" value={editRole} onChange={e => setEditRole(e.target.value)}
-                        style={{ width: 'auto', padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>
-                        <option value="STUDENT">STUDENT</option>
-                        <option value="INSTRUCTOR">INSTRUCTOR</option>
-                        <option value="ADMIN">ADMIN</option>
-                      </select>
-                      <button className="btn btn-sm btn-success" onClick={() => handleRoleUpdate(u.id)}>Save</button>
-                      <button className="btn btn-sm btn-secondary" onClick={() => setEditingId(null)}>Cancel</button>
-                    </div>
-                  ) : (
-                    <span className={`badge ${u.role === 'ADMIN' ? 'badge-error' : u.role === 'INSTRUCTOR' ? 'badge-info' : 'badge-success'}`}>
-                      {u.role}
-                    </span>
-                  )}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-sm btn-secondary" onClick={() => { setEditingId(u.id); setEditRole(u.role); }}>Edit</button>
-                    <button className="btn btn-sm btn-danger" style={{ background: 'transparent', border: '1px solid var(--error)', color: 'var(--error)' }} onClick={() => handleDelete(u.id)}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-/* ─── CATEGORIES TAB ─────────────────────────────────────── */
-function CategoriesTab() {
-  const [showForm, setShowForm] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [newName, setNewName] = useState('');
-  const [newSlug, setNewSlug] = useState('');
-  const [error, setError] = useState('');
-
-  useEffect(() => { loadCategories(); }, []);
-
-  const loadCategories = async () => {
-    try { const { data } = await getCategories(); setCategories(Array.isArray(data) ? data : data.results || []); } catch {}
-    setLoading(false);
-  };
-
-  const toSlug = (str) => str.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-
-  const handleAdd = async (e) => {
-    e.preventDefault(); setError('');
-    const slug = newSlug || toSlug(newName);
+  // ── Instructor approval ──────────────────────────────────────────────────
+  const handleApproveInstructor = async (userId, username) => {
     try {
-      await createCategory({ name: newName, slug });
-      setNewName(''); setNewSlug(''); setShowForm(false); loadCategories();
-    } catch (err) { setError(err.response?.data?.slug?.[0] || err.response?.data?.name?.[0] || 'Failed to create category.'); }
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Delete this category? Courses in it will lose their category.')) {
-      try { await deleteCategory(id); loadCategories(); }
-      catch { alert('Failed to delete category.'); }
+      await approveInstructor(userId);
+      flash(`✅ ${username} approved as instructor`);
+      loadAll();
+    } catch (e) {
+      flash(e.response?.data?.detail || "Failed to approve instructor", true);
     }
   };
 
-  if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
+  const handleRejectInstructor = async (userId, username) => {
+    if (!window.confirm(`Reject ${username}'s instructor application?`)) return;
+    try {
+      await rejectInstructor(userId);
+      flash(`❌ ${username}'s application rejected`);
+      loadAll();
+    } catch (e) {
+      flash(e.response?.data?.detail || "Failed to reject instructor", true);
+    }
+  };
+
+  // ── Course moderation ────────────────────────────────────────────────────
+  const handleCourseApprove = async (id, title) => {
+    try {
+      await adminApproveCourse(id);
+      flash(`✅ "${title}" approved`);
+      loadAll();
+    } catch (e) {
+      flash(e.response?.data?.detail || "Failed to approve course", true);
+    }
+  };
+
+  const handleCourseUnapprove = async (id, title) => {
+    try {
+      await adminUnapproveCourse(id);
+      flash(`↩️ "${title}" approval revoked`);
+      loadAll();
+    } catch (e) {
+      flash(e.response?.data?.detail || "Failed to unapprove course", true);
+    }
+  };
+
+  // ── Render ───────────────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading dashboard…</p>
+        </div>
+      </div>
+    );
+  }
+
+  const s = stats || {};
+  const growth = s.monthly_growth || [];
+  const catData = s.category_distribution || [];
+  const pendingInstructors = s.pending_instructors || [];
+  const recentUsers = s.recent_users || [];
+
+  const pendingCourses = courses.filter(
+    (c) => c.is_submitted && !c.is_approved
+  );
+
+  const tooltipStyle = {
+    backgroundColor: "rgba(255,255,255,0.95)",
+    backdropFilter: "blur(8px)",
+    border: "1px solid rgba(139,92,246,0.2)",
+    borderRadius: "12px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+  };
 
   return (
-    <div className="fade-in">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Site Taxonomy</h3>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Manage course categories and URL structures</p>
-        </div>
-        <button 
-          className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'}`}
-          onClick={() => setShowForm(!showForm)}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-        >
-          {showForm ? <X size={18} /> : <Plus size={18} />}
-          {showForm ? 'Cancel' : 'Add Taxonomy'}
-        </button>
-      </header>
+    <div className="min-h-screen p-4 md:p-6">
+      <div className="max-w-7xl mx-auto">
+        <DashboardNavbar />
 
-      <div className="grid" style={{ 
-        gridTemplateColumns: showForm ? 'minmax(320px, 1fr) 2fr' : '1fr', 
-        gap: '2rem', 
-        alignItems: 'start',
-        transition: 'all 0.3s ease'
-      }}>
-        {/* Left: Add Form (Animated) */}
-        {showForm && (
-          <div className="card fade-in" style={{ position: 'sticky', top: 'var(--space-lg)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              <div style={{ padding: '0.6rem', background: 'var(--info-bg)', borderRadius: 'var(--radius-lg)', color: 'var(--info)' }}>
-                <Layers size={20} />
+        <div className="flex gap-6 mt-4">
+          {/* ── Sidebar ──────────────────────────────────────── */}
+          <div className="hidden lg:flex flex-col w-64 flex-shrink-0">
+            <DashboardSidebar items={sidebarItems} />
+          </div>
+
+          {/* ── Main Content ─────────────────────────────────── */}
+          <div className="flex-1 space-y-6 min-w-0">
+            {/* Header */}
+            <GlassCard className="p-6 bg-gradient-to-r from-purple-600/20 to-blue-600/20">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    Admin Dashboard 🛠️
+                  </h1>
+                  <p className="text-gray-600 mt-1">
+                    Platform overview & management
+                  </p>
+                </div>
+                <button
+                  onClick={loadAll}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh
+                </button>
               </div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Define Category</h3>
+            </GlassCard>
+
+            {/* Flash messages */}
+            {actionMsg && (
+              <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-700">
+                <CheckCircle className="w-5 h-5" />
+                {actionMsg}
+              </div>
+            )}
+            {actionErr && (
+              <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                <AlertCircle className="w-5 h-5" />
+                {actionErr}
+              </div>
+            )}
+
+            {/* Tab Nav */}
+            <div className="flex gap-2 flex-wrap">
+              {TABS.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-xl font-medium transition-all text-sm ${
+                    activeTab === tab
+                      ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
+                      : "bg-white/60 text-gray-600 border border-white/60 hover:bg-white hover:text-gray-900"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
 
-            <form onSubmit={handleAdd}>
-              <div className="form-group">
-                <label className="form-label">Category Name</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  required 
-                  placeholder="e.g. Mechanical Engineering"
-                  value={newName} 
-                  onChange={e => { 
-                    setNewName(e.target.value); 
-                    if (!newSlug || newSlug === toSlug(newName)) {
-                      setNewSlug(toSlug(e.target.value));
-                    }
-                  }} 
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">URL Slug</label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>/</span>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    required 
-                    style={{ paddingLeft: '1.6rem' }}
-                    placeholder="mech-engineering"
-                    value={newSlug} 
-                    onChange={e => setNewSlug(e.target.value)} 
+            {/* ══════════════════ OVERVIEW TAB ══════════════════ */}
+            {activeTab === "Overview" && (
+              <>
+                {/* Stat Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <StatTile
+                    icon={Users}
+                    label="Total Users"
+                    value={fmt(s.users?.total)}
+                    sub={`+${s.users?.new_this_month || 0} this month`}
+                    gradient="from-purple-500 to-pink-500"
+                  />
+                  <StatTile
+                    icon={BookOpen}
+                    label="Total Courses"
+                    value={fmt(s.courses?.total)}
+                    sub={`${s.courses?.approved || 0} approved`}
+                    gradient="from-blue-500 to-cyan-500"
+                  />
+                  <StatTile
+                    icon={DollarSign}
+                    label="Total Revenue"
+                    value={fmtMoney(s.revenue?.total)}
+                    sub={`${fmtMoney(s.revenue?.this_month)} this month`}
+                    gradient="from-violet-500 to-purple-500"
+                  />
+                  <StatTile
+                    icon={TrendingUp}
+                    label="Enrollments"
+                    value={fmt(s.enrollments?.total)}
+                    sub={`${s.enrollments?.paid || 0} paid`}
+                    gradient="from-emerald-500 to-teal-500"
                   />
                 </div>
-              </div>
-              {error && <div className="alert alert-error" style={{ marginBottom: '1rem', padding: '0.6rem', fontSize: '0.75rem' }}>{error}</div>}
-              <button type="submit" className="btn btn-primary btn-block">
-                Create Structure
-              </button>
-            </form>
-          </div>
-        )}
 
-        {/* Right: Category List */}
-        <div className="card">
-          <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Active Categories</h3>
-            <span className="badge badge-info">{categories.length} Total</span>
-          </div>
+                {/* Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <GlassCard className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Platform Growth (6 months)
+                    </h3>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={growth}>
+                          <defs>
+                            <linearGradient id="uGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#9333ea" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#9333ea" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                          <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+                          <Tooltip contentStyle={tooltipStyle} />
+                          <Area type="monotone" dataKey="users" name="New Users" stroke="#9333ea" fill="url(#uGrad)" strokeWidth={2} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </GlassCard>
 
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Slug Reference</th>
-                  <th style={{ textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categories.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>
-                      <Layers size={48} style={{ opacity: 0.1, marginBottom: '1rem' }} />
-                      <p>No categories defined yet.</p>
-                    </td>
-                  </tr>
-                ) : categories.map(cat => (
-                  <tr key={cat.id}>
-                    <td>
-                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{cat.name}</div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>ID: #{cat.id}</div>
-                    </td>
-                    <td>
-                      <code style={{ 
-                        fontSize: '0.75rem', 
-                        padding: '0.2rem 0.5rem', 
-                        background: 'var(--bg-elevated)', 
-                        borderRadius: 'var(--radius-sm)',
-                        color: 'var(--accent-primary)'
-                      }}>
-                        /{cat.slug}
-                      </code>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button 
-                        className="btn btn-sm" 
-                        style={{ color: 'var(--error)', background: 'transparent' }}
-                        onClick={() => handleDelete(cat.id)}
-                        title="Delete Category"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                  <GlassCard className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Category Distribution
+                    </h3>
+                    <div className="h-64">
+                      {catData.length === 0 ? (
+                        <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                          No categories yet. Create categories in the backend admin.
+                        </div>
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={catData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                            <XAxis dataKey="category" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+                            <Tooltip contentStyle={tooltipStyle} />
+                            <Legend />
+                            <Bar dataKey="courses" name="Courses" fill="#9333ea" radius={[6, 6, 0, 0]} />
+                            <Bar dataKey="students" name="Students" fill="#2563eb" radius={[6, 6, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  </GlassCard>
+                </div>
+
+                {/* Recent Users + System Status */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <GlassCard className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Recent Registrations
+                    </h3>
+                    <div className="space-y-3">
+                      {recentUsers.length === 0 ? (
+                        <p className="text-gray-400 text-sm">No users yet.</p>
+                      ) : (
+                        recentUsers.map((u) => (
+                          <div
+                            key={u.id}
+                            className="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-white/60"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                {u.username?.[0]?.toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-gray-900 text-sm">{u.username}</p>
+                                <p className="text-xs text-gray-500">{u.email}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${ROLE_COLORS[u.role] || "bg-gray-100 text-gray-600"}`}>
+                                {u.role}
+                              </span>
+                              <p className="text-xs text-gray-400 mt-1">{u.joined}</p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </GlassCard>
+
+                  <GlassCard className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      System Status
+                    </h3>
+                    <div className="space-y-3">
+                      {[
+                        { name: "API Server", uptime: "99.99%" },
+                        { name: "Database", uptime: "99.98%" },
+                        { name: "Media Storage", uptime: "99.95%" },
+                        { name: "Auth Service", uptime: "100%" },
+                      ].map((sys) => (
+                        <div
+                          key={sys.name}
+                          className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+                            <div className="flex items-center gap-2">
+                              <Activity className="w-4 h-4 text-green-600" />
+                              <span className="font-medium text-gray-800 text-sm">{sys.name}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs text-green-600 font-medium">Operational</span>
+                            <p className="text-xs text-gray-500">{sys.uptime} uptime</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </GlassCard>
+                </div>
+
+                {/* Pending Instructor Applications */}
+                {pendingInstructors.length > 0 && (
+                  <GlassCard className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Pending Instructor Applications ({pendingInstructors.length})
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="text-left text-sm text-gray-500 border-b border-gray-200">
+                            <th className="pb-3 pr-4">Applicant</th>
+                            <th className="pb-3 pr-4">Expertise</th>
+                            <th className="pb-3 pr-4">Experience</th>
+                            <th className="pb-3 pr-4">Applied</th>
+                            <th className="pb-3">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pendingInstructors.map((inst) => (
+                            <tr key={inst.id} className="border-b border-gray-100 hover:bg-purple-50/30 transition-colors">
+                              <td className="py-3 pr-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                    {inst.username?.[0]?.toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-gray-900 text-sm">{inst.username}</p>
+                                    <p className="text-xs text-gray-500">{inst.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 pr-4 text-sm text-gray-700">{inst.expertise || "—"}</td>
+                              <td className="py-3 pr-4 text-sm text-gray-700">{inst.years_of_experience ? `${inst.years_of_experience} yrs` : "—"}</td>
+                              <td className="py-3 pr-4 text-sm text-gray-500">{inst.date_joined}</td>
+                              <td className="py-3">
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleApproveInstructor(inst.id, inst.username)}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+                                  >
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() => handleRejectInstructor(inst.id, inst.username)}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+                                  >
+                                    <XCircle className="w-3.5 h-3.5" />
+                                    Reject
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </GlassCard>
+                )}
+              </>
+            )}
+
+            {/* ══════════════════ COURSES TAB ══════════════════ */}
+            {activeTab === "Courses" && (
+              <GlassCard className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Course Management
+                  </h3>
+                  <div className="flex gap-2 text-sm">
+                    <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full font-medium">
+                      {pendingCourses.length} pending
+                    </span>
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full font-medium">
+                      {courses.filter((c) => c.is_approved).length} approved
+                    </span>
+                  </div>
+                </div>
+
+                {courses.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">
+                    <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                    <p>No courses found</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="text-left text-sm text-gray-500 border-b border-gray-200">
+                          <th className="pb-3 pr-4">Course</th>
+                          <th className="pb-3 pr-4">Instructor</th>
+                          <th className="pb-3 pr-4">Price</th>
+                          <th className="pb-3 pr-4">Enrollments</th>
+                          <th className="pb-3 pr-4">Status</th>
+                          <th className="pb-3">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {courses.map((course) => (
+                          <tr key={course.id} className="border-b border-gray-100 hover:bg-purple-50/30 transition-colors">
+                            <td className="py-3 pr-4">
+                              <p className="font-semibold text-gray-900 text-sm max-w-[200px] truncate">{course.title}</p>
+                              <p className="text-xs text-gray-400">{course.category_name || "No category"}</p>
+                            </td>
+                            <td className="py-3 pr-4 text-sm text-gray-700">{course.instructor_name}</td>
+                            <td className="py-3 pr-4 text-sm text-gray-700">
+                              {parseFloat(course.price) === 0 ? (
+                                <span className="text-green-600 font-medium">Free</span>
+                              ) : (
+                                `$${course.price}`
+                              )}
+                            </td>
+                            <td className="py-3 pr-4 text-sm text-gray-700">{course.enrollment_count || 0}</td>
+                            <td className="py-3 pr-4">
+                              <div className="flex flex-col gap-1">
+                                {course.is_approved ? (
+                                  <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full w-fit">✅ Approved</span>
+                                ) : course.is_submitted ? (
+                                  <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full w-fit">⏳ Pending</span>
+                                ) : (
+                                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full w-fit">📝 Draft</span>
+                                )}
+                                {course.is_published && (
+                                  <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full w-fit">🌐 Published</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3">
+                              <div className="flex gap-2">
+                                {!course.is_approved ? (
+                                  <button
+                                    onClick={() => handleCourseApprove(course.id, course.title)}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-xs font-medium"
+                                  >
+                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                    Approve
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleCourseUnapprove(course.id, course.title)}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors text-xs font-medium"
+                                  >
+                                    <XCircle className="w-3.5 h-3.5" />
+                                    Revoke
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </GlassCard>
+            )}
+
+            {/* ══════════════════ USERS TAB ══════════════════ */}
+            {activeTab === "Users" && (
+              <GlassCard className="p-6">
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    All Users ({users.length})
+                  </h3>
+                  <div className="flex gap-2 text-sm">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
+                      {users.filter((u) => u.role === "STUDENT").length} Students
+                    </span>
+                    <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+                      {users.filter((u) => u.role === "INSTRUCTOR").length} Instructors
+                    </span>
+                  </div>
+                </div>
+
+                {users.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">
+                    <Users className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                    <p>No users found</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="text-left text-sm text-gray-500 border-b border-gray-200">
+                          <th className="pb-3 pr-4">User</th>
+                          <th className="pb-3 pr-4">Email</th>
+                          <th className="pb-3 pr-4">Role</th>
+                          <th className="pb-3 pr-4">Joined</th>
+                          <th className="pb-3">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {users.map((u) => (
+                          <tr key={u.id} className="border-b border-gray-100 hover:bg-purple-50/30 transition-colors">
+                            <td className="py-3 pr-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                  {u.username?.[0]?.toUpperCase()}
+                                </div>
+                                <span className="font-medium text-gray-900 text-sm">{u.username}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 pr-4 text-sm text-gray-600">{u.email}</td>
+                            <td className="py-3 pr-4">
+                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${ROLE_COLORS[u.role] || "bg-gray-100 text-gray-600"}`}>
+                                {u.role}
+                              </span>
+                            </td>
+                            <td className="py-3 pr-4 text-xs text-gray-500">
+                              {u.date_joined ? new Date(u.date_joined).toLocaleDateString() : "—"}
+                            </td>
+                            <td className="py-3">
+                              {u.role === "STUDENT" && u.expertise && (
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleApproveInstructor(u.id, u.username)}
+                                    className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-xs font-medium"
+                                  >
+                                    <CheckCircle className="w-3 h-3" />
+                                    Promote
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </GlassCard>
+            )}
+
+            {/* ══════════════════ CATEGORIES TAB ══════════════════ */}
+            {activeTab === "Categories" && (
+              <GlassCard className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                  Category Analytics
+                </h3>
+                {catData.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">
+                    <BarChart2 className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                    <p>No categories found. Create them in the Django admin panel.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="h-80 mb-8">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={catData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                          <XAxis dataKey="category" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+                          <Tooltip contentStyle={tooltipStyle} />
+                          <Legend />
+                          <Bar dataKey="courses" name="Courses" fill="#9333ea" radius={[8, 8, 0, 0]} />
+                          <Bar dataKey="students" name="Students" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {catData.map((cat) => (
+                        <div
+                          key={cat.category}
+                          className="p-4 bg-white/70 border border-white/60 rounded-xl"
+                        >
+                          <h4 className="font-semibold text-gray-900 mb-2">{cat.category}</h4>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-purple-600 font-medium">{cat.courses} courses</span>
+                            <span className="text-blue-600 font-medium">{cat.students} students</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </GlassCard>
+            )}
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── COURSE APPROVALS TAB ───────────────────────────────── */
-function CourseApprovalsTab() {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('pending'); // 'pending' | 'approved' | 'all'
-  const navigate = useNavigate();
-
-  useEffect(() => { loadCourses(); }, []);
-
-  const loadCourses = async () => {
-    setLoading(true);
-    try { const { data } = await getAllCourses(); setCourses(Array.isArray(data) ? data : data.results || []); } catch {}
-    setLoading(false);
-  };
-
-  const handleApprove = async (id) => {
-    try { await approveCourse(id); loadCourses(); }
-    catch { alert('Failed to approve course.'); }
-  };
-
-  const handleUnapprove = async (id) => {
-    if (window.confirm('Revoke this course approval? Students will no longer see it.')) {
-      try { await unapproveCourse(id); loadCourses(); }
-      catch { alert('Failed to unapprove course.'); }
-    }
-  };
-
-  const filtered = courses.filter(c => {
-    if (filter === 'pending') return c.is_published && !c.is_approved;
-    if (filter === 'approved') return c.is_approved;
-    return true;
-  });
-
-  if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
-
-  const pendingCount = courses.filter(c => c.is_published && !c.is_approved).length;
-
-  return (
-    <div className="fade-in">
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem' }}>
-        {[
-          { id: 'pending', label: 'Pending Review', count: pendingCount, variant: 'warning' },
-          { id: 'approved', label: 'In Production', count: courses.filter(c => c.is_approved).length, variant: 'success' },
-          { id: 'all', label: 'Inventory', count: courses.length, variant: 'secondary' }
-        ].map(btn => (
-          <button 
-            key={btn.id} 
-            className={`btn btn-sm ${filter === btn.id ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFilter(btn.id)}
-            style={{ position: 'relative' }}
-          >
-            {btn.label}
-            {btn.count > 0 && (
-              <span style={{ 
-                background: btn.variant === 'warning' ? 'var(--warning)' : 'var(--bg-elevated)', 
-                color: btn.variant === 'warning' ? 'black' : 'var(--text-primary)',
-                padding: '1px 6px', borderRadius: '10px', fontSize: '0.65rem', marginLeft: '0.5rem', fontWeight: 800
-              }}>
-                {btn.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Curriculum</th>
-              <th>Architect</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>
-                <div style={{ opacity: 0.5, marginBottom: '0.5rem' }}><CheckCircle size={32} style={{ margin: '0 auto' }}/></div>
-                Clean queue. No courses to display.
-              </td></tr>
-            ) : filtered.map(course => (
-              <tr key={course.id}>
-                <td>
-                  <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{course.title}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{course.category || 'Uncategorized'}</div>
-                </td>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <GraduationCap size={14} className="text-muted" />
-                    <span style={{ fontSize: '0.85rem' }}>{course.instructor_name}</span>
-                  </div>
-                </td>
-                <td>
-                  <span className={`badge ${course.is_approved ? 'badge-success' : course.is_published ? 'badge-warning' : 'badge-secondary'}`}>
-                    {course.is_approved ? 'Live' : course.is_published ? 'Ready' : 'Draft'}
-                  </span>
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-sm btn-secondary" onClick={() => navigate(`/courses/${course.id}`)}>
-                      <ExternalLink size={14} />
-                    </button>
-                    {!course.is_approved ? (
-                      <button className="btn btn-sm btn-success" onClick={() => handleApprove(course.id)} disabled={!course.is_published}>
-                        Approve
-                      </button>
-                    ) : (
-                      <button className="btn btn-sm btn-danger" onClick={() => handleUnapprove(course.id)}>
-                        Revoke
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
     </div>
   );

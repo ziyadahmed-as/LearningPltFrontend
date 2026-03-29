@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getLesson, updateLesson,
-  uploadLessonImage, uploadLessonFile,
-  createLessonLink, deleteLessonLink,
   createContentBlock, updateContentBlock, deleteContentBlock
 } from '../services/api';
 import TiptapEditor from '../components/TiptapEditor';

@@ -20,8 +20,16 @@ export default function InstructorRevenuePage() {
         getWallet(),
         getWithdrawalRequests()
       ]);
-      setWallet(walletRes.data[0] || { balance: '0.00', total_earned: '0.00', transactions: [] });
-      setWithdrawals(withdrawalsRes.data);
+      // Wallet is returned as a list (one entry per user)
+      const walletData = Array.isArray(walletRes.data)
+        ? walletRes.data[0]
+        : walletRes.data.results?.[0];
+      setWallet(walletData || { balance: '0.00', total_earned: '0.00', transactions: [] });
+      // Normalize withdrawals (paginated or plain array)
+      const wdData = Array.isArray(withdrawalsRes.data)
+        ? withdrawalsRes.data
+        : withdrawalsRes.data.results || [];
+      setWithdrawals(wdData);
     } catch (err) {
       console.error('Failed to load revenue data:', err);
     } finally {

@@ -13,8 +13,12 @@ export default function MyCoursesPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: '', slug: '', description: '', price: '0.00', category: '', is_published: false });
+  const [form, setForm] = useState({ 
+    title: '', slug: '', description: '', price: '0.00', category: '', is_published: false 
+  });
+  const [thumbnailFile, setThumbnailFile] = useState(null);
   const [error, setError] = useState('');
+  const [msg, setMsg] = useState('');
 
   useEffect(() => { loadData(); }, []);
 
@@ -34,17 +38,24 @@ export default function MyCoursesPage() {
   const handleCreate = async (e) => {
     e.preventDefault();
     setError('');
+    
+    const formData = new FormData();
+    Object.keys(form).forEach(key => formData.append(key, form[key]));
+    if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
+
     try {
-      const { data } = await createCourse({ ...form, price: parseFloat(form.price) });
+      const { data } = await createCourse(formData);
       setShowForm(false);
+      setThumbnailFile(null);
       setForm({ title: '', slug: '', description: '', price: '0.00', category: '', is_published: false });
-      // Redirect to course editor to add content immediately
       navigate(`/editor/courses/${data.id}`);
     } catch (err) {
       const data = err.response?.data;
       if (data) {
         const firstKey = Object.keys(data)[0];
         setError(Array.isArray(data[firstKey]) ? data[firstKey][0] : JSON.stringify(data));
+      } else {
+        setError('Failed to create course. Please try again.');
       }
     }
   };
@@ -110,6 +121,16 @@ export default function MyCoursesPage() {
               <label className="form-label">Description</label>
               <textarea className="form-textarea" value={form.description} onChange={(e) => update('description', e.target.value)} required />
             </div>
+            <div className="form-group">
+              <label className="form-label">Course Thumbnail (Optional)</label>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => setThumbnailFile(e.target.files[0])}
+                className="form-input"
+                style={{ paddingTop: '0.5rem' }}
+              />
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className="form-group">
                 <label className="form-label">Price (USD)</label>
@@ -139,10 +160,26 @@ export default function MyCoursesPage() {
         <div className="grid-courses">
           {stats.courses.map((course) => {
             return (
-              <div className="card" key={course.id}>
-                <div className="card-header" style={{ paddingBottom: '0.5rem' }}>
-                  <h3 className="card-title" style={{ marginBottom: '0.2rem' }}>{course.title}</h3>
-                  <p className="card-subtitle">{course.lesson_count} lessons</p>
+              <div className="card" key={course.id} style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ height: '160px', overflow: 'hidden', background: '#e2e8f0', position: 'relative' }}>
+                  {course.thumbnail ? (
+                    <img src={course.thumbnail} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8', fontSize: '2rem' }}>📖</div>
+                  )}
+                  <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }}>
+                    <span className={`badge ${course.is_published ? 'badge-success' : 'badge-warning'}`} style={{ backdropFilter: 'blur(4px)', background: 'rgba(255,255,255,0.8)', border: 'none', color: '#1e293b' }}>
+                      {course.is_published ? 'Published' : 'Draft'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="card-header" style={{ padding: '1rem 1.5rem 0.5rem' }}>
+                  <h3 className="card-title" style={{ marginBottom: '0.2rem', fontSize: '1.2rem' }}>{course.title}</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <p className="card-subtitle">{course.lesson_count} lessons</p>
+                    {parseFloat(course.price) === 0 ? <span className="badge badge-free">Free</span> : <span style={{ fontWeight: 700, color: 'var(--accent-primary)' }}>${course.price}</span>}
+                  </div>
                 </div>
                 
                 {/* Embedded Stats Section */}

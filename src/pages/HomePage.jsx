@@ -75,7 +75,7 @@ export default function HomePage() {
                  
                  <p className="text-xl md:text-2xl font-medium text-white/80 max-w-3xl leading-relaxed">
                     Learn from world-class experts. Prepare smarter with modern curricula. <br/>
-                    Build the future you've always imagined with EduTech.
+                    Build the future you've always imagined with FATRA Academy.
                  </p>
 
                  <div className="flex flex-wrap gap-6 pt-4">
@@ -375,7 +375,7 @@ export default function HomePage() {
                      Initialize Your <br/> Faculty Node
                   </h3>
                   <p className="text-xl md:text-2xl font-medium text-white/80 max-w-2xl leading-relaxed">
-                     Deploy your intellectual capital to the EduTech global network. Register as a peer-validated instructor and reach students on every continent.
+                     Deploy your intellectual capital to the FATRA Academy global network. Register as a peer-validated instructor and reach students on every continent.
                   </p>
                   <button 
                     onClick={() => navigate('/instructor-onboarding')}
@@ -404,7 +404,7 @@ export default function HomePage() {
                     <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
                       <BookOpen className="w-7 h-7" />
                     </div>
-                    <span className="text-3xl font-black tracking-tighter text-slate-900 italic">EduTech Hub</span>
+                    <span className="text-3xl font-black tracking-tighter text-slate-900 italic">FATRA Academy</span>
                   </div>
                   <p className="text-slate-500 font-medium text-lg leading-relaxed max-w-md">
                      The global standard for synchronized, peer-validated education artifacts. Bridging the gap between theory and industry mastery.
@@ -443,7 +443,7 @@ export default function HomePage() {
             </div>
 
             <div className="pt-16 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-10">
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">© 2026 EDUTECH GLOBAL — ALL REPOSITORY RIGHTS RESERVED</p>
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">© 2026 FATRA ACADEMY GLOBAL — ALL REPOSITORY RIGHTS RESERVED</p>
                <div className="flex items-center gap-10">
                   <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2 italic">
                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> SYNCED: ALL NODES OK

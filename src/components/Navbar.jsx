@@ -43,7 +43,7 @@ export default function Navbar({ onHelpClick }) {
               <BookOpen className="w-7 h-7" />
             </div>
             <span className="text-2xl font-black tracking-tighter text-white italic">
-              EduTech
+              FATRA Academy
             </span>
           </Link>
 

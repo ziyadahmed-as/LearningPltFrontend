@@ -1,64 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCourses, getCategories } from '../services/api';
-import { Search, Filter, BookOpen, Users, Star, Clock } from 'lucide-react';
-
-function CourseCard({ course }) {
-  const navigate = useNavigate();
-  return (
-    <div
-      onClick={() => navigate(`/courses/${course.id}`)}
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden group"
-    >
-      {/* Thumbnail */}
-      <div className="relative h-44 bg-gradient-to-br from-purple-600 to-blue-600 overflow-hidden">
-        {course.thumbnail ? (
-          <img
-            src={course.thumbnail}
-            alt={course.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <BookOpen className="w-12 h-12 text-white/60" />
-          </div>
-        )}
-        {parseFloat(course.price) === 0 ? (
-          <span className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-            FREE
-          </span>
-        ) : (
-          <span className="absolute top-3 right-3 bg-white text-purple-700 text-sm font-bold px-2 py-1 rounded-full shadow">
-            ${course.price}
-          </span>
-        )}
-      </div>
-
-      {/* Body */}
-      <div className="p-5">
-        <h3 className="font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-purple-700 transition-colors">
-          {course.title}
-        </h3>
-        <p className="text-sm text-gray-500 mb-3">by {course.instructor_name}</p>
-
-        <p className="text-sm text-gray-600 line-clamp-2 mb-4">
-          {course.description}
-        </p>
-
-        <div className="flex items-center gap-3 text-xs text-gray-500 pt-3 border-t border-gray-100">
-          <span className="flex items-center gap-1">
-            <Users className="w-3.5 h-3.5" />
-            {course.enrollment_count || 0}
-          </span>
-          <span className="flex items-center gap-1">
-            <BookOpen className="w-3.5 h-3.5" />
-            {course.chapters?.length || 0} chapters
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { Search, Filter, BookOpen, Users, Star, Clock, ArrowUpRight, GraduationCap, TrendingUp, ChevronDown, LayoutGrid, List, Zap, Radio, Code, Brain } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { GlassCard } from '../components/glass-card';
+import CourseCard from '../components/CourseCard';
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -66,10 +12,17 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
-  const [priceFilter, setPriceFilter] = useState('all'); // 'all' | 'free' | 'paid'
+  const [priceFilter, setPriceFilter] = useState('all'); 
+  const [viewMode, setViewMode] = useState('grid');
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    const typeParam = searchParams.get('type');
+    if (typeParam) setSelectedType(typeParam);
+
     Promise.all([getCourses(), getCategories()])
       .then(([coursesRes, catsRes]) => {
         const all = Array.isArray(coursesRes.data)
@@ -82,14 +35,12 @@ export default function CoursesPage() {
           : catsRes.data.results || [];
         setCategories(cats);
       })
-      .catch(() => {})
+      .catch((err) => console.error("Identity retrieval failure:", err))
       .finally(() => setLoading(false));
   }, []);
 
   const filtered = useMemo(() => {
     let list = [...courses];
-
-    // Search
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -99,20 +50,18 @@ export default function CoursesPage() {
           c.instructor_name?.toLowerCase().includes(q)
       );
     }
-
-    // Category
     if (selectedCategory !== 'all') {
       list = list.filter((c) => String(c.category) === selectedCategory);
     }
-
-    // Price
+    if (selectedType !== 'all') {
+      list = list.filter((c) => c.course_type === selectedType);
+    }
     if (priceFilter === 'free') {
       list = list.filter((c) => parseFloat(c.price) === 0);
     } else if (priceFilter === 'paid') {
       list = list.filter((c) => parseFloat(c.price) > 0);
     }
-
-    // Sort
+    
     if (sortBy === 'newest') {
       list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     } else if (sortBy === 'popular') {
@@ -122,113 +71,176 @@ export default function CoursesPage() {
     } else if (sortBy === 'price_desc') {
       list.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
     }
-
     return list;
-  }, [courses, search, selectedCategory, priceFilter, sortBy]);
+  }, [courses, search, selectedCategory, selectedType, priceFilter, sortBy]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">Loading courses…</p>
+          <div className="w-20 h-20 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-10 shadow-xl" />
+          <p className="text-slate-400 font-black uppercase tracking-[0.4em] text-[10px] animate-pulse">Syncing Knowledge Reservoir...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Browse Courses</h1>
-        <p className="text-gray-600">
-          {courses.length} courses available — discover your next skill
-        </p>
-      </div>
-
-      {/* Search + Filters */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-8 flex flex-wrap gap-3 items-center">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search courses, instructors…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
-          />
-        </div>
-
-        {/* Category */}
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white"
-        >
-          <option value="all">All Categories</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={String(cat.id)}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-
-        {/* Price filter */}
-        <select
-          value={priceFilter}
-          onChange={(e) => setPriceFilter(e.target.value)}
-          className="px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white"
-        >
-          <option value="all">All Prices</option>
-          <option value="free">Free Only</option>
-          <option value="paid">Paid Only</option>
-        </select>
-
-        {/* Sort */}
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white"
-        >
-          <option value="newest">Newest First</option>
-          <option value="popular">Most Popular</option>
-          <option value="price_asc">Price: Low to High</option>
-          <option value="price_desc">Price: High to Low</option>
-        </select>
-
-        <span className="text-sm text-gray-400 whitespace-nowrap">
-          {filtered.length} result{filtered.length !== 1 ? 's' : ''}
-        </span>
-      </div>
-
-      {/* Course Grid */}
-      {filtered.length === 0 ? (
-        <div className="text-center py-20">
-          <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No courses found</h3>
-          <p className="text-gray-500">
-            {search || selectedCategory !== 'all' || priceFilter !== 'all'
-              ? 'Try adjusting your filters'
-              : 'No approved courses yet. Check back soon!'}
-          </p>
-          {(search || selectedCategory !== 'all' || priceFilter !== 'all') && (
-            <button
-              onClick={() => { setSearch(''); setSelectedCategory('all'); setPriceFilter('all'); setSortBy('newest'); }}
-              className="mt-4 px-5 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors text-sm"
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pt-32 pb-32 font-sans selection:bg-indigo-500/10">
+      
+      {/* ─── Header Section ─── */}
+      <section className="container mx-auto px-10 mb-20">
+         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 border-b border-slate-100 pb-20">
+            <motion.div
+               initial={{ opacity: 0, x: -30 }}
+               animate={{ opacity: 1, x: 0 }}
+               transition={{ duration: 0.8 }}
+               className="space-y-6"
             >
-              Clear Filters
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filtered.map((course) => (
-            <CourseCard key={course.id} course={course} />
-          ))}
-        </div>
-      )}
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
+                     <TrendingUp size={20} />
+                  </div>
+                  <span className="text-xs font-black text-indigo-600 uppercase tracking-[0.4em]">Knowledge Repository</span>
+               </div>
+               <h1 className="text-5xl md:text-8xl font-black text-slate-900 tracking-tighter leading-none italic uppercase">
+                  Master Your <br/> Intellectual Path
+               </h1>
+               <p className="text-xl font-medium text-slate-500 max-w-2xl leading-relaxed">
+                  Discover {courses.length} high-fidelity modules across various technology and academic domains. Synchronize your skills with global standards.
+               </p>
+            </motion.div>
+
+            <div className="flex flex-wrap gap-4 bg-white p-3 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50">
+               <div className="px-10 py-4 border-r border-slate-50">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Artifacts</p>
+                  <p className="text-3xl font-black text-slate-900 italic tracking-tighter">{courses.length}</p>
+               </div>
+               <div className="px-10 py-4">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Verified Nodes</p>
+                  <p className="text-3xl font-black text-slate-900 italic tracking-tighter">100%</p>
+               </div>
+            </div>
+         </div>
+      </section>
+
+      {/* ─── Search & Filter Hub ─── */}
+      <section className="container mx-auto px-10 mb-16">
+         <div className="flex flex-col xl:flex-row items-center gap-6">
+            {/* Search Matrix */}
+            <div className="relative flex-1 w-full group">
+               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={20} />
+               <input 
+                  type="text" 
+                  placeholder="SEARCH HUB INDEX (SYMBOLS, FACULTY, TAGS)..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full h-16 bg-white border border-slate-100 rounded-[1.8rem] pl-16 pr-8 text-sm font-bold text-slate-900 tracking-tighter shadow-sm focus:ring-1 focus:ring-indigo-600 focus:outline-none transition-all"
+               />
+            </div>
+
+            {/* Filter Hub */}
+            <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto">
+               <div className="relative flex-1 xl:w-64 min-w-[200px]">
+                  <select 
+                     value={selectedCategory}
+                     onChange={(e) => setSelectedCategory(e.target.value)}
+                     className="w-full h-16 bg-white border border-slate-100 rounded-[1.8rem] px-8 text-[10px] font-black uppercase tracking-[0.2em] cursor-pointer appearance-none focus:ring-1 focus:ring-indigo-600 focus:outline-none shadow-sm"
+                  >
+                     <option value="all">ALL DOMAINS</option>
+                     {categories.map(cat => <option key={cat.id} value={String(cat.id)}>{cat.name.toUpperCase()}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+               </div>
+
+               <div className="relative flex-1 xl:w-48 min-w-[160px]">
+                  <select 
+                     value={sortBy}
+                     onChange={(e) => setSortBy(e.target.value)}
+                     className="w-full h-16 bg-white border border-slate-100 rounded-[1.8rem] px-8 text-[10px] font-black uppercase tracking-[0.2em] cursor-pointer appearance-none focus:ring-1 focus:ring-indigo-600 focus:outline-none shadow-sm"
+                  >
+                     <option value="newest">LATEST NODES</option>
+                     <option value="popular">TOP TRENDING</option>
+                     <option value="price_asc">PRICE: ASC</option>
+                     <option value="price_desc">PRICE: DESC</option>
+                  </select>
+                  <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+               </div>
+
+               <div className="relative flex-1 xl:w-64 min-w-[200px]">
+                  <select 
+                     value={selectedType}
+                     onChange={(e) => setSelectedType(e.target.value)}
+                     className="w-full h-16 bg-white border border-slate-100 rounded-[1.8rem] px-8 text-[10px] font-black uppercase tracking-[0.2em] cursor-pointer appearance-none focus:ring-1 focus:ring-indigo-600 focus:outline-none shadow-sm"
+                  >
+                     <option value="all">ALL MODES</option>
+                     <option value="LIVE_TUTORIAL">LIVE TUTORIAL HUB</option>
+                     <option value="HARD_SKILL_RECORDED">HARD SKILL MATRIX</option>
+                     <option value="SOFT_SKILL">SOFT SKILL MASTERY</option>
+                  </select>
+                  <Radio className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+               </div>
+
+               <div className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-[1.8rem] shadow-sm">
+                  <button onClick={() => setViewMode('grid')} className={`p-4 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:bg-slate-50'}`}><LayoutGrid size={20} /></button>
+                  <button onClick={() => setViewMode('list')} className={`p-4 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:bg-slate-50'}`}><List size={20} /></button>
+               </div>
+            </div>
+         </div>
+      </section>
+
+      {/* ─── Module Matrix ─── */}
+      <section className="container mx-auto px-10">
+         <AnimatePresence mode="popLayout">
+            {filtered.length === 0 ? (
+               <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="py-64 flex flex-col items-center justify-center text-center bg-white border border-slate-100 rounded-[4rem] shadow-inner"
+               >
+                  <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-10">
+                     <BookOpen size={48} />
+                  </div>
+                  <h3 className="text-3xl font-black text-slate-900 tracking-tighter italic uppercase mb-4">Zero Knowledge Results</h3>
+                  <p className="text-slate-500 font-medium mb-12 max-w-md">Your neural query did not match any active module artifacts in the hub index.</p>
+                  <button 
+                     onClick={() => { setSearch(''); setSelectedCategory('all'); setPriceFilter('all'); }}
+                     className="px-12 py-5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20"
+                  >
+                     Reset Hub Index
+                  </button>
+               </motion.div>
+            ) : (
+               <motion.div 
+                  layout
+                  className={`grid gap-12 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}
+               >
+                  {filtered.map(course => (
+                     <CourseCard key={course.id} course={course} />
+                  ))}
+               </motion.div>
+            )}
+         </AnimatePresence>
+      </section>
+
+      {/* ─── Footer CTA ─── */}
+      <section className="container mx-auto px-10 mt-40">
+         <div className="bg-slate-900 rounded-[4rem] p-16 md:p-32 flex flex-col md:flex-row items-center justify-between gap-16 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-[60%] h-full bg-indigo-600 translate-x-1/2 -skew-x-12 opacity-80 z-0 transition-transform group-hover:translate-x-[45%]" />
+            <div className="relative z-10 text-white space-y-8">
+               <h3 className="text-5xl md:text-7xl font-black tracking-tighter leading-none italic uppercase">Missing a <br/> Mastery Unit?</h3>
+               <p className="text-xl font-medium text-white/60 max-w-xl">
+                  Contact our hub moderator to request specific intellectual protocols or to propose a Faculty Registry addition.
+               </p>
+               <button className="px-12 py-5 bg-white text-slate-950 rounded-2xl font-black text-xs uppercase tracking-[0.3em] hover:scale-105 active:scale-95 transition-all shadow-2xl flex items-center gap-4">
+                  Request Portal Signal <ArrowUpRight size={20} />
+               </button>
+            </div>
+            <div className="relative z-10 hidden xl:block">
+               <GraduationCap size={240} className="text-white/10 -rotate-12" />
+            </div>
+         </div>
+      </section>
     </div>
   );
 }

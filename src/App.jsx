@@ -78,7 +78,8 @@ function LayoutWrapper() {
   const location = useLocation();
   // We keep students and instructors in "full app mode" (hidden navbar),
   // but let Admins keep the global navbar for easy site-wide navigation.
-  const isDashboard = ['/my-courses', '/revenue', '/my-enrollments'].includes(location.pathname);
+  const dashboardRoutes = ['/my-courses', '/revenue', '/my-enrollments', '/admin', '/profile'];
+  const isDashboard = dashboardRoutes.some(route => location.pathname.startsWith(route));
 
   const openHelp = () => {
     window.dispatchEvent(new CustomEvent('open-fatra-ai'));
@@ -91,11 +92,6 @@ function LayoutWrapper() {
         <AppRoutes />
       </main>
       <FatraAIChat />
-      {!isDashboard && (
-        <footer className="app-footer">
-          © 2026 Fatra Academy — Full-Stack Django & React Learning Platform
-        </footer>
-      )}
     </div>
   );
 }

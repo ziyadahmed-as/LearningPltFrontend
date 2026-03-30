@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import {
-  getCourse,
-  createChapter, deleteChapter, updateChapter,
+  getCourse, createChapter, deleteChapter, updateChapter,
   createLesson, deleteLesson, updateLesson,
   getCategories, generateCourseDescription,
   submitCourseForApproval, updateCourse
 } from '../services/api';
+import DashboardLayout from '../components/DashboardLayout';
+import { 
+  ArrowLeft, Settings, Globe, Send, Plus, 
+  Trash2, ArrowUp, ArrowDown, Edit3, Type,
+  Sparkles, Image as ImageIcon, Video, FolderGit2
+} from 'lucide-react';
+import { GlassCard } from '../components/glass-card';
 
 export default function CourseEditorPage() {
   const { id } = useParams();
@@ -85,7 +92,6 @@ export default function CourseEditorPage() {
     try {
       const { data } = await generateCourseDescription({
         title: settings.title,
-        // Optional: Could add inputs for audience/keywords if needed
       });
       setSettings({ ...settings, description: data.description });
     } catch (err) {
@@ -123,7 +129,6 @@ export default function CourseEditorPage() {
     const title = prompt('Enter lesson title:');
     if (!title) return;
     try {
-      // Find the chapter to calculate lesson order
       const chapter = course.chapters.find(c => c.id === chapterId);
       await createLesson({ chapter: chapterId, title, order: chapter?.lessons?.length || 0 });
       loadCourse();
@@ -142,7 +147,6 @@ export default function CourseEditorPage() {
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= chapters.length) return;
 
-    // Swap orders
     const current = chapters[index];
     const target = chapters[targetIndex];
     
@@ -173,154 +177,306 @@ export default function CourseEditorPage() {
     } catch { alert('Failed to reorder lessons'); }
   };
 
-  if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
-  if (!course) return <div className="empty-state"><p className="empty-state-text">Course not found</p></div>;
+  if (loading) {
+    return (
+      <DashboardLayout title="Protocol Editor" subtitle="Loading node artifacts...">
+        <div className="flex items-center justify-center min-h-[400px]">
+           <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
-  const lessonCount = course.lessons?.length || 0;
+  if (!course) {
+    return (
+      <DashboardLayout title="Protocol Editor" subtitle="Error">
+        <div className="py-24 flex flex-col items-center justify-center text-center opacity-40">
+           <FolderGit2 size={64} strokeWidth={1} />
+           <p className="mt-8 text-xs font-black uppercase tracking-[0.2em]">Course not found</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const lessonCount = course.lessons?.length || (course.chapters?.reduce((acc, chap) => acc + (chap.lessons?.length || 0), 0)) || 0;
 
   return (
-    <div>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 className="page-title">Course Editor: {course.title}</h1>
-          <p className="page-subtitle">Manage lessons and course settings</p>
-          {/* Status badges */}
-          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-            <span className={`badge ${course.is_published ? 'badge-success' : 'badge-warning'}`}>
-              {course.is_published ? '📢 Published' : '📝 Draft'}
-            </span>
-            {course.is_published && (
-              <span className={`badge ${course.is_approved ? 'badge-success' : (course.is_submitted ? 'badge-info' : 'badge-error')}`}>
-                {course.is_approved ? '✅ Approved' : (course.is_submitted ? '⏳ Pending Approval' : '🛠️ Not Submitted')}
-              </span>
-            )}
-            <span className="badge badge-info">{lessonCount} lessons</span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <button className="btn btn-secondary" onClick={() => setShowSettings(!showSettings)}>
-            ⚙️ {showSettings ? 'Hide Settings' : 'Course Settings'}
-          </button>
-          <button
-            className={`btn ${course.is_published ? 'btn-secondary' : 'btn-success'}`}
-            onClick={handleTogglePublish}
-          >
-            {course.is_published ? 'Unpublish' : '🚀 Publish as Draft'}
-          </button>
-          {!course.is_approved && course.is_published && !course.is_submitted && (
-            <button className="btn btn-primary" onClick={handleSubmitForApproval}>
-              📤 Submit for Approval
-            </button>
-          )}
-          <button className="btn btn-secondary" onClick={() => navigate('/my-courses')}>← Back</button>
-        </div>
-      </div>
-
-      {/* Course Settings Panel */}
-      {showSettings && (
-        <div className="card" style={{ marginBottom: '2rem', animation: 'fadeIn 0.3s ease', maxWidth: '600px' }}>
-          <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>⚙️ Course Settings</h3>
-          <form onSubmit={handleSaveSettings}>
-            <div className="form-group">
-              <label className="form-label">Title</label>
-              <input className="form-input" value={settings.title}
-                onChange={e => setSettings({ ...settings, title: e.target.value })} required />
-            </div>
-            <div className="form-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <label className="form-label" style={{ marginBottom: 0 }}>Description</label>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-secondary"
-                  onClick={handleGenerateDescription}
-                  disabled={generatingAI}
-                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none' }}
-                >
-                  {generatingAI ? '✨ Generating...' : '✨ AI Assist'}
-                </button>
-              </div>
-              <textarea className="form-textarea" value={settings.description}
-                onChange={e => setSettings({ ...settings, description: e.target.value })} required
-                style={{ minHeight: '150px' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-              <div className="form-group">
-                <label className="form-label">Course Thumbnail</label>
-                <input type="file" className="form-input" accept="image/*" onChange={e => setThumbnail(e.target.files[0])} />
-                {course.thumbnail && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Current: {course.thumbnail.split('/').pop()}</p>}
-              </div>
-              <div className="form-group">
-                <label className="form-label">Promotional Video</label>
-                <input type="file" className="form-input" accept="video/*" onChange={e => setPromoVideo(e.target.files[0])} />
-                {course.promo_video && <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Current: {course.promo_video.split('/').pop()}</p>}
-              </div>
-            </div>
-            <div style={{ marginTop: 'var(--space-xl)', display: 'flex', gap: 'var(--space-md)' }}>
-              <button className="btn btn-primary" type="submit" disabled={saving}>
-                {saving ? 'Saving...' : '💾 Save Course Settings'}
+    <DashboardLayout 
+      title="Protocol Editor" 
+      subtitle={course.title}
+    >
+      <div className="space-y-12 pb-32">
+        {/* Editor Toolbar */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8 border-b border-slate-100 pb-10">
+           <div className="flex flex-wrap items-center gap-4">
+              <button onClick={() => navigate('/my-courses')} className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:shadow-xl transition-all">
+                 <ArrowLeft size={20} />
               </button>
-              <button className="btn btn-secondary" type="button" onClick={() => setShowSettings(false)}>Cancel</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Add Chapter button */}
-      <div style={{ marginBottom: 'var(--space-2xl)' }}>
-        <button className="btn btn-primary" onClick={handleAddChapter}>+ Add Chapter</button>
-      </div>
-
-      {course.chapters?.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">📁</div>
-          <p className="empty-state-text">No chapters added yet. Start by adding a chapter.</p>
-        </div>
-      ) : (
-        <div className="editor-chapters-list" style={{ maxWidth: '800px' }}>
-          {course.chapters?.map((chapter, ci) => (
-            <div key={chapter.id} className="card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                  <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Chapter {ci + 1}:</span> {chapter.title}
-                </h3>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn btn-sm btn-secondary" onClick={() => handleMoveChapter(ci, -1)} disabled={ci === 0}>↑</button>
-                  <button className="btn btn-sm btn-secondary" onClick={() => handleMoveChapter(ci, 1)} disabled={ci === course.chapters.length - 1}>↓</button>
-                  <button className="btn btn-sm btn-primary" onClick={() => handleAddLesson(chapter.id)}>+ Add Lesson</button>
-                  <button className="btn btn-sm btn-secondary" onClick={() => handleDeleteChapter(chapter.id)}>Delete Chapter</button>
-                </div>
+              
+              <div className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                 <span className={`w-2.5 h-2.5 rounded-full ${course.is_published ? 'bg-emerald-500' : 'bg-amber-400'}`} />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">
+                    {course.is_published ? 'Deployed' : 'Draft Mode'}
+                 </span>
               </div>
-
-              {chapter.lessons?.length === 0 ? (
-                <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.9rem' }}>No lessons in this chapter yet.</p>
-              ) : (
-                <div className="editor-lessons-list">
-                  {chapter.lessons.map((lesson, li) => (
-                    <div className="editor-lesson" key={lesson.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'var(--bg-elevated)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', marginTop: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div style={{
-                          width: '24px', height: '24px', borderRadius: '50%', background: 'var(--background)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '0.75rem', marginRight: 'var(--space-md)', color: 'var(--text-muted)', border: '1px solid var(--border)'
-                        }}>
-                          {li + 1}
-                        </div>
-                        <span style={{ fontWeight: 500 }}>{lesson.title}</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-sm btn-secondary" onClick={() => handleMoveLesson(chapter.id, li, -1)} disabled={li === 0}>↑</button>
-                        <button className="btn btn-sm btn-secondary" onClick={() => handleMoveLesson(chapter.id, li, 1)} disabled={li === chapter.lessons.length - 1}>↓</button>
-                        <button className="btn btn-sm btn-primary" onClick={() => navigate(`/editor/lessons/${lesson.id}`)}>Edit Content</button>
-                        <button className="btn btn-sm btn-secondary" onClick={() => handleDeleteLesson(lesson.id)}>Remove</button>
-                      </div>
-                    </div>
-                  ))}
+              
+              {course.is_published && (
+                <div className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">
+                      {course.is_approved ? '✅ Verified' : (course.is_submitted ? '⏳ Pending Review' : '🛠️ Local Edits')}
+                   </span>
                 </div>
               )}
-            </div>
-          ))}
+              
+              <div className="px-6 py-3 bg-indigo-50 text-indigo-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-indigo-100">
+                 {lessonCount} Nodes
+              </div>
+           </div>
+
+           <div className="flex flex-wrap items-center gap-4">
+              <button 
+                onClick={() => setShowSettings(!showSettings)}
+                className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 transition-all ${
+                  showSettings ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/20' : 'bg-white text-slate-600 border border-slate-100 hover:shadow-xl'
+                }`}
+              >
+                 <Settings size={16} /> Config
+              </button>
+
+              <button 
+                onClick={handleTogglePublish}
+                className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 transition-all ${
+                  course.is_published ? 'bg-white text-slate-600 border border-slate-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                }`}
+              >
+                 <Globe size={16} /> {course.is_published ? 'Retract' : 'Deploy Draft'}
+              </button>
+
+              {!course.is_approved && course.is_published && !course.is_submitted && (
+                <button 
+                  onClick={handleSubmitForApproval}
+                  className="px-8 py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:scale-105 shadow-xl shadow-indigo-600/30 transition-all"
+                >
+                   <Send size={16} /> Request Verification
+                </button>
+              )}
+           </div>
         </div>
-      )}
-    </div>
+
+        {/* Global Config Panel */}
+        <AnimatePresence>
+           {showSettings && (
+             <motion.div 
+               initial={{ opacity: 0, height: 0 }}
+               animate={{ opacity: 1, height: 'auto' }}
+               exit={{ opacity: 0, height: 0 }}
+               className="overflow-hidden"
+             >
+               <GlassCard className="p-10 mb-12 bg-white border-slate-100 shadow-2xl shadow-slate-200/50">
+                  <h3 className="text-xl font-black text-slate-900 italic tracking-tighter uppercase mb-8 flex items-center gap-3">
+                     <Settings size={24} className="text-indigo-600" /> Protocol Configuration
+                  </h3>
+
+                  <form onSubmit={handleSaveSettings} className="space-y-8">
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Identifier</label>
+                           <div className="relative group">
+                              <Type size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" />
+                              <input 
+                                className="w-full bg-slate-50 border border-slate-100 rounded-[1.8rem] p-5 pl-14 text-slate-900 font-bold text-sm focus:ring-1 focus:ring-indigo-600 focus:bg-white transition-all shadow-sm" 
+                                value={settings.title}
+                                onChange={e => setSettings({ ...settings, title: e.target.value })} 
+                                required 
+                              />
+                           </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-6">
+                           <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Domain Slot</label>
+                              <select 
+                                 className="w-full bg-slate-50 border border-slate-100 rounded-[1.8rem] p-5 text-slate-900 text-[10px] font-black uppercase tracking-widest appearance-none focus:ring-1 focus:ring-indigo-600 focus:bg-white shadow-sm"
+                                 value={settings.category} 
+                                 onChange={(e) => setSettings({ ...settings, category: e.target.value })}
+                              >
+                                 <option value="">Select Domain</option>
+                                 {categories.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                 ))}
+                              </select>
+                           </div>
+                           <div className="space-y-2">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Valuation Matrix</label>
+                              <input 
+                                 className="w-full bg-slate-50 border border-slate-100 rounded-[1.8rem] p-5 text-slate-900 text-sm font-bold shadow-sm focus:ring-1 focus:ring-indigo-600 focus:bg-white"
+                                 type="number" step="0.01" 
+                                 value={settings.price} 
+                                 onChange={(e) => setSettings({ ...settings, price: e.target.value })} 
+                              />
+                           </div>
+                        </div>
+                     </div>
+
+                     <div className="space-y-2">
+                        <div className="flex items-center justify-between ml-4">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocol Intelligence</label>
+                           <button 
+                             type="button" 
+                             onClick={handleGenerateDescription}
+                             disabled={generatingAI}
+                             className="flex items-center gap-2 text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-colors"
+                           >
+                              <Sparkles size={14} /> {generatingAI ? 'Synthesizing...' : 'AI Auto-Fill'}
+                           </button>
+                        </div>
+                        <textarea 
+                           className="w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-6 text-slate-900 font-bold text-sm focus:ring-1 focus:ring-indigo-600 focus:bg-white transition-all shadow-sm min-h-[160px]" 
+                           value={settings.description}
+                           onChange={e => setSettings({ ...settings, description: e.target.value })} 
+                           required 
+                        />
+                     </div>
+
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Knowledge Thumbnail</label>
+                           <label className="flex items-center justify-center w-full h-32 px-4 transition bg-slate-50 border-2 border-slate-100 border-dashed rounded-[2rem] hover:border-indigo-600 hover:bg-slate-100 cursor-pointer">
+                              <div className="flex flex-col items-center space-y-2">
+                                 <ImageIcon size={24} className="text-slate-400" />
+                                 <span className="text-xs font-bold text-slate-500">{thumbnail ? thumbnail.name : (course.thumbnail ? 'File Extant - Override' : 'Upload Image Signal')}</span>
+                              </div>
+                              <input type="file" className="hidden" accept="image/*" onChange={e => setThumbnail(e.target.files[0])} />
+                           </label>
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Promo Sequence</label>
+                           <label className="flex items-center justify-center w-full h-32 px-4 transition bg-slate-50 border-2 border-slate-100 border-dashed rounded-[2rem] hover:border-indigo-600 hover:bg-slate-100 cursor-pointer">
+                              <div className="flex flex-col items-center space-y-2">
+                                 <Video size={24} className="text-slate-400" />
+                                 <span className="text-xs font-bold text-slate-500">{promoVideo ? promoVideo.name : (course.promo_video ? 'File Extant - Override' : 'Upload Video Artifact')}</span>
+                              </div>
+                              <input type="file" className="hidden" accept="video/*" onChange={e => setPromoVideo(e.target.files[0])} />
+                           </label>
+                        </div>
+                     </div>
+
+                     <div className="flex justify-end gap-4 pt-4 border-t border-slate-100">
+                        <button 
+                          type="button" 
+                          onClick={() => setShowSettings(false)}
+                          className="px-8 py-4 bg-white text-slate-500 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm hover:shadow-xl transition-all"
+                        >
+                           Dismiss
+                        </button>
+                        <button 
+                          type="submit" 
+                          disabled={saving}
+                          className="px-8 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/20 hover:scale-105 active:scale-95 transition-all"
+                        >
+                           {saving ? 'Committing...' : 'Commit Configuration'}
+                        </button>
+                     </div>
+                  </form>
+               </GlassCard>
+             </motion.div>
+           )}
+        </AnimatePresence>
+
+        {/* Curriculum Builder */}
+        <div className="flex items-center justify-between mb-8">
+           <h3 className="text-2xl font-black text-slate-900 italic tracking-tighter uppercase">Protocol Curriculum</h3>
+           <button 
+             onClick={handleAddChapter}
+             className="px-8 py-4 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+           >
+              <Plus size={16} /> New Chapter Hub
+           </button>
+        </div>
+
+        {course.chapters?.length === 0 ? (
+           <div className="py-24 flex flex-col items-center justify-center text-center bg-white border border-slate-100 rounded-[3rem] shadow-sm">
+              <FolderGit2 size={48} className="text-slate-200 mb-6" />
+              <h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter mb-2">Zero Curriculum Nodes</h3>
+              <p className="text-sm font-medium text-slate-500 max-w-sm mb-8">Initialize your first chapter hub to start adding actionable learning protocols.</p>
+              <button onClick={handleAddChapter} className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl">Initialize Matrix</button>
+           </div>
+        ) : (
+           <div className="space-y-8">
+              {course.chapters?.map((chapter, ci) => (
+                 <motion.div 
+                   key={chapter.id}
+                   initial={{ opacity: 0, y: 10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] transition-all"
+                 >
+                    {/* Chapter Header */}
+                    <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-50/50">
+                       <div className="flex items-center gap-6">
+                          <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center font-black text-indigo-600 text-xl italic tracking-tighter border border-indigo-100 shrink-0">
+                             {(ci + 1).toString().padStart(2, '0')}
+                          </div>
+                          <div>
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Chapter Hub</p>
+                             <h4 className="text-2xl font-black text-slate-900 italic tracking-tighter leading-none line-clamp-1">{chapter.title}</h4>
+                          </div>
+                       </div>
+                       
+                       <div className="flex items-center gap-3 shrink-0">
+                          <div className="flex items-center gap-1 bg-white border border-slate-100 rounded-xl p-1 shadow-sm">
+                             <button onClick={() => handleMoveChapter(ci, -1)} disabled={ci === 0} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-lg disabled:opacity-30 transition-colors"><ArrowUp size={16} /></button>
+                             <button onClick={() => handleMoveChapter(ci, 1)} disabled={ci === course.chapters.length - 1} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-lg disabled:opacity-30 transition-colors"><ArrowDown size={16} /></button>
+                          </div>
+                          
+                          <button onClick={() => handleAddLesson(chapter.id)} className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg hover:bg-indigo-600 transition-colors flex items-center gap-2">
+                             <Plus size={14} /> Unit
+                          </button>
+                          
+                          <button onClick={() => handleDeleteChapter(chapter.id)} className="p-3 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-500 hover:text-white transition-colors">
+                             <Trash2 size={16} />
+                          </button>
+                       </div>
+                    </div>
+
+                    {/* Lessons List */}
+                    <div className="p-8 bg-white">
+                       {chapter.lessons?.length === 0 ? (
+                          <div className="text-center py-10 opacity-60">
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">No lesson nodes injected yet.</p>
+                          </div>
+                       ) : (
+                          <div className="space-y-4">
+                             {chapter.lessons.map((lesson, li) => (
+                                <div key={lesson.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 bg-slate-50 border border-slate-100 rounded-3xl group hover:border-indigo-100 hover:bg-indigo-50/10 transition-all">
+                                   <div className="flex items-center gap-5">
+                                      <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black text-slate-400 text-xs shadow-sm shrink-0">
+                                         {li + 1}
+                                      </div>
+                                      <span className="text-sm font-black text-slate-700 uppercase italic tracking-wider line-clamp-1">{lesson.title}</span>
+                                   </div>
+                                   
+                                   <div className="flex items-center gap-3 shrink-0">
+                                      <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1">
+                                         <button onClick={() => handleMoveLesson(chapter.id, li, -1)} disabled={li === 0} className="p-2 text-slate-400 hover:text-indigo-600 rounded-lg disabled:opacity-30 transition-colors"><ArrowUp size={14} /></button>
+                                         <button onClick={() => handleMoveLesson(chapter.id, li, 1)} disabled={li === chapter.lessons.length - 1} className="p-2 text-slate-400 hover:text-indigo-600 rounded-lg disabled:opacity-30 transition-colors"><ArrowDown size={14} /></button>
+                                      </div>
+                                      <button onClick={() => navigate(`/editor/lessons/${lesson.id}`)} className="px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:text-indigo-600 hover:border-indigo-200 shadow-sm transition-all flex items-center gap-2">
+                                         <Edit3 size={14} /> Edit Artifact
+                                      </button>
+                                      <button onClick={() => handleDeleteLesson(lesson.id)} className="p-3 bg-white border border-slate-200 text-slate-400 rounded-xl hover:text-rose-500 hover:border-rose-200 transition-colors">
+                                         <Trash2 size={16} />
+                                      </button>
+                                   </div>
+                                </div>
+                             ))}
+                          </div>
+                       )}
+                    </div>
+                 </motion.div>
+              ))}
+           </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }

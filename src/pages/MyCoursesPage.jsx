@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { getInstructorStats, createCourse, deleteCourse, updateCourse, getCategories } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import DashboardLayout from '../components/DashboardLayout';
 import StatCard from '../components/StatCard';
-import { BookOpen, CheckCircle, Clock, Users, Eye, Layers } from 'lucide-react';
+import { 
+  BookOpen, CheckCircle, Clock, Users, Eye, Layers, 
+  MoreVertical, Plus, Search, LayoutGrid, List, PlusCircle,
+  FilePlus, Download, ExternalLink, Trash2, Edit3, Globe
+} from 'lucide-react';
 
 export default function MyCoursesPage() {
   const { user } = useAuth();
@@ -18,7 +23,8 @@ export default function MyCoursesPage() {
   });
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [error, setError] = useState('');
-  const [msg, setMsg] = useState('');
+  const [viewMode, setViewMode] = useState("grid");
+  const [activeTab, setActiveTab] = useState("All Assets");
 
   useEffect(() => { loadData(); }, []);
 
@@ -38,11 +44,9 @@ export default function MyCoursesPage() {
   const handleCreate = async (e) => {
     e.preventDefault();
     setError('');
-    
     const formData = new FormData();
     Object.keys(form).forEach(key => formData.append(key, form[key]));
     if (thumbnailFile) formData.append('thumbnail', thumbnailFile);
-
     try {
       const { data } = await createCourse(formData);
       setShowForm(false);
@@ -50,18 +54,12 @@ export default function MyCoursesPage() {
       setForm({ title: '', slug: '', description: '', price: '0.00', category: '', is_published: false });
       navigate(`/editor/courses/${data.id}`);
     } catch (err) {
-      const data = err.response?.data;
-      if (data) {
-        const firstKey = Object.keys(data)[0];
-        setError(Array.isArray(data[firstKey]) ? data[firstKey][0] : JSON.stringify(data));
-      } else {
-        setError('Failed to create course. Please try again.');
-      }
+      setError('System Failure: Asset initialization protocol failed.');
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this course?')) {
+    if (window.confirm('Terminate this protocol permanently?')) {
       await deleteCourse(id);
       loadData();
     }
@@ -71,190 +69,266 @@ export default function MyCoursesPage() {
     try {
       await updateCourse(course.id, { is_published: !course.is_published });
       loadData();
-    } catch { alert('Failed to update publish status'); }
+    } catch { alert('Protocol update failed'); }
   };
 
   const update = (field, value) => {
     const next = { ...form, [field]: value };
-    // Auto-generate slug from title
     if (field === 'title') next.slug = toSlug(value);
     setForm(next);
   };
 
-  if (loading || !stats) return <div className="loading-container"><div className="spinner"></div></div>;
+  if (loading || !stats) {
+    return (
+      <DashboardLayout title="Faculty Node" subtitle="Initializing Protocol Matrix">
+        <div className="flex items-center justify-center min-h-[400px]">
+           <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const TABS = ["All Assets", "Published", "Drafts", "Peer Review"];
+
+  const filteredCourses = stats.courses.filter(c => {
+     if (activeTab === "All Assets") return true;
+     if (activeTab === "Published") return c.is_published;
+     if (activeTab === "Drafts") return !c.is_published;
+     return true;
+  });
 
   return (
     <DashboardLayout 
-      title="Instructor Dashboard"
-      subtitle="Create courses, manage lessons, and track performance"
+      title="Curricular Hub" 
+      subtitle="Administrative Management of Knowledge Artifacts"
     >
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : '+ New Course'}
-        </button>
-      </div>
-
-      {/* Stats overview */}
-      <div className="stats-grid-modern" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-        <StatCard icon={Layers} label="Total Courses" value={stats.total_courses} />
-        <StatCard icon={BookOpen} label="Published" value={stats.published} />
-        <StatCard icon={CheckCircle} label="Approved" value={stats.approved} variant={stats.approved > 0 ? "success" : "primary"} />
-        <StatCard icon={Clock} label="Pending Review" value={stats.pending} variant={stats.pending > 0 ? "warning" : "primary"} />
-        <StatCard icon={Users} label="Total Enrollments" value={stats.total_enrollments} />
-        <StatCard icon={Eye} label="Total Views" value={stats.total_views} />
-      </div>
-
-      {showForm && (
-        <div className="auth-card" style={{ marginBottom: 'var(--space-2xl)' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 'var(--space-lg)' }}>Create New Course</h2>
-          {error && <div className="alert alert-error">{error}</div>}
-          <form onSubmit={handleCreate}>
-            <div className="form-group">
-              <label className="form-label">Title</label>
-              <input className="form-input" value={form.title} onChange={(e) => update('title', e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Slug (auto-generated)</label>
-              <input className="form-input" value={form.slug} onChange={(e) => update('slug', e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Description</label>
-              <textarea className="form-textarea" value={form.description} onChange={(e) => update('description', e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Course Thumbnail (Optional)</label>
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={(e) => setThumbnailFile(e.target.files[0])}
-                className="form-input"
-                style={{ paddingTop: '0.5rem' }}
-              />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="form-group">
-                <label className="form-label">Price (USD)</label>
-                <input className="form-input" type="number" step="0.01" value={form.price} onChange={(e) => update('price', e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Category</label>
-                <select className="form-select" value={form.category} onChange={(e) => update('category', e.target.value)}>
-                  <option value="">Select category</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <button className="btn btn-primary btn-block" type="submit">Create Course</button>
-          </form>
+      <div className="space-y-12">
+        
+        {/* Institutional Statistics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+          <StatCard icon={Layers} label="Protocol Total" value={stats.total_courses} variant="primary" />
+          <StatCard icon={Globe} label="Live Deployment" value={stats.published} variant="success" />
+          <StatCard icon={CheckCircle} label="Certified" value={stats.approved} variant="purple" />
+          <StatCard icon={Clock} label="Under Review" value={stats.pending} variant="warning" />
+          <StatCard icon={Users} label="Scholar Density" value={stats.total_enrollments} variant="cyan" />
+          <StatCard icon={Eye} label="Global Impact" value={stats.total_views} variant="primary" />
         </div>
-      )}
 
-      {stats.courses.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">📖</div>
-          <p className="empty-state-text">You haven't created any courses yet. Click "+ New Course" to get started!</p>
+        {/* Figma Inspired Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-white/5 pb-10">
+           <div className="flex items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/10 overflow-x-auto whitespace-nowrap scrollbar-hide">
+              {TABS.map(tab => (
+                 <button 
+                   key={tab}
+                   onClick={() => setActiveTab(tab)}
+                   className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                     activeTab === tab 
+                       ? 'bg-indigo-600 text-white shadow-lg' 
+                       : 'text-slate-500 hover:text-white hover:bg-white/5'
+                   }`}
+                 >
+                   {tab}
+                 </button>
+              ))}
+           </div>
+
+           <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/10">
+                 <button onClick={() => setViewMode("grid")} className={`p-2.5 rounded-xl transition-all ${viewMode === "grid" ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}><LayoutGrid size={16} /></button>
+                 <button onClick={() => setViewMode("list")} className={`p-2.5 rounded-xl transition-all ${viewMode === "list" ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}><List size={16} /></button>
+              </div>
+              <button 
+                onClick={() => setShowForm(!showForm)}
+                className="px-8 py-3 bg-white text-indigo-950 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:scale-105 transition-all shadow-xl shadow-white/5"
+              >
+                 <Plus size={16} /> Initial Protocol
+              </button>
+           </div>
         </div>
-      ) : (
-        <div className="grid-courses">
-          {stats.courses.map((course) => {
-            return (
-              <div className="card" key={course.id} style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ height: '160px', overflow: 'hidden', background: '#e2e8f0', position: 'relative' }}>
-                  {course.thumbnail ? (
-                    <img src={course.thumbnail} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8', fontSize: '2rem' }}>📖</div>
-                  )}
-                  <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem' }}>
-                    <span className={`badge ${course.is_published ? 'badge-success' : 'badge-warning'}`} style={{ backdropFilter: 'blur(4px)', background: 'rgba(255,255,255,0.8)', border: 'none', color: '#1e293b' }}>
-                      {course.is_published ? 'Published' : 'Draft'}
-                    </span>
-                  </div>
-                </div>
 
-                <div className="card-header" style={{ padding: '1rem 1.5rem 0.5rem' }}>
-                  <h3 className="card-title" style={{ marginBottom: '0.2rem', fontSize: '1.2rem' }}>{course.title}</h3>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <p className="card-subtitle">{course.lesson_count} lessons</p>
-                    {parseFloat(course.price) === 0 ? <span className="badge badge-free">Free</span> : <span style={{ fontWeight: 700, color: 'var(--accent-primary)' }}>${course.price}</span>}
-                  </div>
-                </div>
-                
-                {/* Embedded Stats Section */}
-                <div style={{ padding: '0 1.5rem', marginBottom: '0.5rem' }}>
-                  <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      👥 <strong>{course.enrollment_count}</strong> enrollments
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      👁️ <strong>{course.views_count}</strong> views
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      ⭐ <strong>{course.average_rating || 'NR'}</strong>
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    <span>Progress:</span>
-                    <div style={{ flex: 1, height: '6px', backgroundColor: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div 
-                        style={{ 
-                          height: '100%', 
-                          backgroundColor: 'var(--primary)', 
-                          width: `${course.completion_percentage}%`,
-                          transition: 'width 0.3s ease'
-                        }} 
-                      />
+        {/* Creation Overlay (Modal Style) */}
+        <AnimatePresence>
+           {showForm && (
+              <motion.div 
+                 initial={{ opacity: 0, scale: 0.95 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 exit={{ opacity: 0, scale: 0.95 }}
+                 className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-3xl"
+              >
+                 <div className="w-full max-w-2xl bg-[#020617] p-12 rounded-[3.5rem] border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] relative">
+                    <button onClick={() => setShowForm(false)} className="absolute top-8 right-8 p-3 text-slate-500 hover:text-white transition-colors">
+                       <X size={24} />
+                    </button>
+                    
+                    <div className="mb-10 text-center">
+                       <h2 className="text-4xl font-black text-white italic tracking-tighter mb-2">Protocol Genesis</h2>
+                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Initialize a New Knowledge Artifact</p>
                     </div>
-                    <strong>{course.completion_percentage}%</strong>
-                  </div>
-                </div>
 
-                <div className="card-body" style={{ paddingTop: '0.5rem' }}>
-                  {/* Status badges */}
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                    {parseFloat(course.price) === 0 ? (
-                      <span className="badge badge-free">Free</span>
-                    ) : (
-                      <span className="price-tag">${course.price}</span>
-                    )}
-                    <span className={`badge ${course.is_published ? 'badge-success' : 'badge-warning'}`}>
-                      {course.is_published ? '📢 Published' : '📝 Draft'}
-                    </span>
-                    {course.is_published && (
-                      <span className={`badge ${course.is_approved ? 'badge-success' : 'badge-error'}`} style={{ fontWeight: 700 }}>
-                        {course.is_approved ? '✅ Approved & Live' : '❌ Needs Review / Rejected'}
-                      </span>
-                    )}
-                    {course.is_published && !course.is_approved && (
-                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', width: '100%' }}>
-                        ℹ️ This course is not visible to students until admin approves it.
-                      </p>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="card-footer" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end', background: 'var(--background)' }}>
-                  <button
-                    className={`btn btn-sm ${course.is_published ? 'btn-secondary' : 'btn-success'}`}
-                    onClick={() => handleTogglePublish(course)}
-                    title={course.is_published ? 'Unpublish this course' : 'Submit for admin approval'}
-                  >
-                    {course.is_published ? 'Unpublish' : 'Publish'}
-                  </button>
-                  <button className="btn btn-sm btn-primary" onClick={() => navigate(`/editor/courses/${course.id}`)}>
-                    Edit Structure
-                  </button>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(course.id)}>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                    <form onSubmit={handleCreate} className="space-y-6">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Module Identifier</label>
+                          <input 
+                            className="w-full bg-white/5 border border-white/5 rounded-3xl p-5 text-sm font-bold text-white focus:ring-1 focus:ring-indigo-500/20 transition-all focus:border-indigo-500/20" 
+                            placeholder="Engineering Dynamics v1.0"
+                            value={form.title} 
+                            onChange={(e) => update('title', e.target.value)} 
+                            required 
+                          />
+                       </div>
+
+                       <div className="grid grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Deployment Slot</label>
+                             <select 
+                                className="w-full bg-white/5 border border-white/5 rounded-3xl p-5 text-sm font-bold text-white appearance-none" 
+                                value={form.category} 
+                                onChange={(e) => update('category', e.target.value)}
+                             >
+                                <option value="" className="bg-slate-950">Select Sector</option>
+                                {categories.map((c) => (
+                                   <option key={c.id} value={c.id} className="bg-slate-950">{c.name}</option>
+                                ))}
+                             </select>
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Protocol Valuation</label>
+                             <input 
+                                className="w-full bg-white/5 border border-white/5 rounded-3xl p-5 text-sm font-bold text-white" 
+                                type="number" step="0.01" 
+                                value={form.price} 
+                                onChange={(e) => update('price', e.target.value)} 
+                             />
+                          </div>
+                       </div>
+
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Summary Protocol</label>
+                          <textarea 
+                             className="w-full bg-white/5 border border-white/5 rounded-3xl p-5 text-sm font-bold text-white min-h-[120px]" 
+                             value={form.description} 
+                             onChange={(e) => update('description', e.target.value)} 
+                             required 
+                          />
+                       </div>
+
+                       <div className="pt-6">
+                          <button 
+                            className="w-full py-5 bg-indigo-600 text-white rounded-[2rem] font-black text-[10px] font-black uppercase tracking-[0.3em] shadow-xl shadow-indigo-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all" 
+                            type="submit"
+                          >
+                             Commit to Hub Registry
+                          </button>
+                       </div>
+                    </form>
+                 </div>
+              </motion.div>
+           )}
+        </AnimatePresence>
+
+        {/* Dashboard Grid - Figma Files Appearance */}
+        {filteredCourses.length === 0 ? (
+           <div className="py-24 flex flex-col items-center justify-center text-center opacity-40">
+              <FilePlus size={64} strokeWidth={1} />
+              <p className="mt-8 text-xs font-black uppercase tracking-[0.2em]">No Modules Detected in Hub Segment</p>
+           </div>
+        ) : viewMode === "grid" ? (
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+             {filteredCourses.map((course, i) => (
+                <motion.div 
+                   key={course.id}
+                   initial={{ opacity: 0, y: 10 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   transition={{ delay: i * 0.05 }}
+                   className="group"
+                >
+                   <div className="relative aspect-[4/3] rounded-[2.5rem] overflow-hidden bg-slate-900 border border-white/5 group-hover:border-indigo-500/50 transition-all shadow-2xl">
+                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950/90 to-transparent z-10" />
+                      {course.thumbnail ? (
+                         <img src={course.thumbnail} className="w-full h-full object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-700 opacity-60 group-hover:opacity-100" alt="" />
+                      ) : (
+                         <div className="w-full h-full flex items-center justify-center text-indigo-500/20 bg-indigo-500/5 font-black text-6xl italic">F</div>
+                      )}
+                      
+                      <div className="absolute top-6 left-6 z-20">
+                         <span className={`px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${course.is_published ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'}`}>
+                            {course.is_published ? 'Deployed' : 'Draft Node'}
+                         </span>
+                      </div>
+                      
+                      <div className="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-end">
+                         <div>
+                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1 leading-none">{course.lesson_count} UNITS</p>
+                            <p className="text-sm font-black text-white italic truncate max-w-[140px] leading-tight">{course.title}</p>
+                         </div>
+                         <div className="text-right">
+                            <button 
+                               onClick={() => navigate(`/editor/courses/${course.id}`)}
+                               className="p-3 bg-white/10 hover:bg-white text-white hover:text-indigo-950 rounded-2xl backdrop-blur-md transition-all border border-white/10"
+                            >
+                               <Edit3 size={16} />
+                            </button>
+                         </div>
+                      </div>
+                   </div>
+
+                   {/* Quick Stats Summary Below Figma Card */}
+                   <div className="mt-6 flex items-center justify-between px-3 text-[9px] font-black uppercase tracking-widest text-slate-600">
+                      <div className="flex items-center gap-4">
+                         <span className="flex items-center gap-1.5"><Users size={12} className="text-slate-500" /> {course.enrollment_count}</span>
+                         <span className="flex items-center gap-1.5"><Eye size={12} className="text-slate-500" /> {course.views_count}</span>
+                      </div>
+                      <button onClick={() => handleDelete(course.id)} className="p-2 text-slate-700 hover:text-rose-500 transition-colors">
+                         <Trash2 size={16} />
+                      </button>
+                   </div>
+                </motion.div>
+             ))}
+           </div>
+        ) : (
+           /* Optimized List View */
+           <div className="space-y-4">
+             {filteredCourses.map((course, i) => (
+                <motion.div
+                   key={course.id}
+                   initial={{ opacity: 0, x: -10 }}
+                   animate={{ opacity: 1, x: 0 }}
+                   transition={{ delay: i * 0.05 }}
+                   className="group p-5 bg-white/5 border border-white/5 rounded-3xl flex items-center gap-8 hover:bg-white/10 hover:border-indigo-500/20 transition-all"
+                >
+                   <div className="w-16 h-12 bg-slate-800 rounded-xl overflow-hidden flex-shrink-0">
+                      <img src={course.thumbnail} className="w-full h-full object-cover opacity-60 group-hover:opacity-100" />
+                   </div>
+                   <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-black text-white uppercase tracking-wider truncate mb-1">{course.title}</h4>
+                      <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest italic">{course.lesson_count} Protocol Clusters</p>
+                   </div>
+                   <div className="hidden lg:flex items-center gap-16">
+                      <div className="text-center">
+                         <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Status</p>
+                         <p className={`text-[10px] font-black italic uppercase ${course.is_published ? 'text-emerald-400' : 'text-amber-400'}`}>
+                            {course.is_published ? 'Deployed' : 'Draft'}
+                         </p>
+                      </div>
+                      <div className="text-center">
+                         <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Engagement</p>
+                         <p className="text-[10px] font-black text-white uppercase italic">{course.enrollment_count} Nodes</p>
+                      </div>
+                      <div className="text-center">
+                         <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] mb-1">Market Equity</p>
+                         <p className="text-[10px] font-black text-white uppercase italic">${course.price}</p>
+                      </div>
+                   </div>
+                   <div className="flex items-center gap-3">
+                      <button onClick={() => navigate(`/editor/courses/${course.id}`)} className="p-3 bg-white/5 hover:bg-indigo-600 text-slate-400 hover:text-white rounded-xl transition-all"><Edit3 size={16} /></button>
+                      <button onClick={() => handleTogglePublish(course)} className="p-3 bg-white/5 hover:bg-white text-slate-400 hover:text-indigo-900 rounded-xl transition-all">{course.is_published ? <Download size={16} /> : <Globe size={16} />}</button>
+                      <button onClick={() => handleDelete(course.id)} className="p-3 bg-white/5 hover:bg-rose-600 text-slate-400 hover:text-white rounded-xl transition-all"><Trash2 size={16} /></button>
+                   </div>
+                </motion.div>
+             ))}
+           </div>
+        )}
+      </div>
     </DashboardLayout>
   );
 }

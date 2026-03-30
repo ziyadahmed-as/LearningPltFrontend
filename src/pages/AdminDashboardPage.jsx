@@ -1,11 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
-import { DashboardNavbar } from "../components/dashboard-navbar";
-import { DashboardSidebar } from "../components/dashboard-sidebar";
+import { useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
+import DashboardLayout from "../components/DashboardLayout";
+import StatCard from "../components/StatCard";
 import { GlassCard } from "../components/glass-card";
 import {
-  Home, Users, BookOpen, DollarSign, TrendingUp,
+  Users, BookOpen, DollarSign, TrendingUp,
   CheckCircle, XCircle, Activity, RefreshCw, AlertCircle,
-  BarChart2, Settings, ShieldCheck,
+  BarChart2, ShieldCheck, ArrowRight, ShieldAlert,
+  Clock, Zap, Globe, Package, Layers, Info
 } from "lucide-react";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis,
@@ -28,36 +31,23 @@ const fmtMoney = (n) =>
   n >= 1_000 ? `$${(n / 1_000).toFixed(1)}K` : `$${(n || 0).toFixed(0)}`;
 
 const ROLE_COLORS = {
-  STUDENT: "bg-blue-100 text-blue-700",
-  INSTRUCTOR: "bg-purple-100 text-purple-700",
-  ADMIN: "bg-red-100 text-red-700",
+  STUDENT: "bg-indigo-50 text-indigo-600 border-indigo-100",
+  INSTRUCTOR: "bg-purple-50 text-purple-600 border-purple-100",
+  ADMIN: "bg-rose-50 text-rose-600 border-rose-100",
 };
 
-const TABS = ["Overview", "Courses", "Users", "Categories"];
-
-// ─── Stat card sub-component ──────────────────────────────────────────────────
-function StatTile({ icon: Icon, label, value, sub, gradient }) {
-  return (
-    <GlassCard className="p-6">
-      <div className="flex items-center gap-3 mb-2">
-        <div
-          className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-r ${gradient}`}
-        >
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-        <div>
-          <p className="text-sm text-gray-500">{label}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-        </div>
-      </div>
-      {sub && <p className="text-xs text-green-600 font-medium mt-1">{sub}</p>}
-    </GlassCard>
-  );
-}
+const TABS = [
+  { id: "Overview", icon: Activity, label: "Systems Overview" },
+  { id: "Courses", icon: Layers, label: "Course Pipeline" },
+  { id: "Users", icon: Users, label: "User Registry" },
+  { id: "Categories", icon: BarChart2, label: "Analytics" }
+];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState("Overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "Overview";
+  const setActiveTab = (tab) => setSearchParams({ tab });
   const [stats, setStats] = useState(null);
   const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
@@ -65,14 +55,6 @@ export default function AdminDashboardPage() {
   const [actionMsg, setActionMsg] = useState("");
   const [actionErr, setActionErr] = useState("");
 
-  const sidebarItems = [
-    { icon: Home, label: "Overview", path: "#" },
-    { icon: Users, label: "Users", path: "#" },
-    { icon: BookOpen, label: "Courses", path: "#" },
-    { icon: BarChart2, label: "Categories", path: "#" },
-  ];
-
-  // ── Data loading ─────────────────────────────────────────────────────────
   const loadAll = useCallback(async () => {
     setLoading(true);
     setActionMsg("");
@@ -94,7 +76,7 @@ export default function AdminDashboardPage() {
       setUsers(allUsers);
     } catch (e) {
       console.error("Dashboard load error:", e);
-      setActionErr("Failed to load dashboard data. Is the API running?");
+      setActionErr("Connection failure: Failed to reach the education registry.");
     } finally {
       setLoading(false);
     }
@@ -108,57 +90,30 @@ export default function AdminDashboardPage() {
     setTimeout(() => { setActionMsg(""); setActionErr(""); }, 4000);
   };
 
-  // ── Instructor approval ──────────────────────────────────────────────────
   const handleApproveInstructor = async (userId, username) => {
     try {
       await approveInstructor(userId);
-      flash(`✅ ${username} approved as instructor`);
+      flash(`✅ Faculty certification for ${username} activated.`);
       loadAll();
     } catch (e) {
-      flash(e.response?.data?.detail || "Failed to approve instructor", true);
+      flash(e.response?.data?.detail || "Certification failure.", true);
     }
   };
 
-  const handleRejectInstructor = async (userId, username) => {
-    if (!window.confirm(`Reject ${username}'s instructor application?`)) return;
-    try {
-      await rejectInstructor(userId);
-      flash(`❌ ${username}'s application rejected`);
-      loadAll();
-    } catch (e) {
-      flash(e.response?.data?.detail || "Failed to reject instructor", true);
-    }
-  };
-
-  // ── Course moderation ────────────────────────────────────────────────────
   const handleCourseApprove = async (id, title) => {
     try {
       await adminApproveCourse(id);
-      flash(`✅ "${title}" approved`);
+      flash(`✅ Global signal for "${title}" verified.`);
       loadAll();
     } catch (e) {
-      flash(e.response?.data?.detail || "Failed to approve course", true);
+      flash(e.response?.data?.detail || "Verification failure.", true);
     }
   };
 
-  const handleCourseUnapprove = async (id, title) => {
-    try {
-      await adminUnapproveCourse(id);
-      flash(`↩️ "${title}" approval revoked`);
-      loadAll();
-    } catch (e) {
-      flash(e.response?.data?.detail || "Failed to unapprove course", true);
-    }
-  };
-
-  // ── Render ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading dashboard…</p>
-        </div>
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin shadow-xl shadow-indigo-600/10" />
       </div>
     );
   }
@@ -168,519 +123,335 @@ export default function AdminDashboardPage() {
   const catData = s.category_distribution || [];
   const pendingInstructors = s.pending_instructors || [];
   const recentUsers = s.recent_users || [];
+  const pendingCourses = courses.filter((c) => c.is_submitted && !c.is_approved);
 
-  const pendingCourses = courses.filter(
-    (c) => c.is_submitted && !c.is_approved
-  );
-
-  const tooltipStyle = {
-    backgroundColor: "rgba(255,255,255,0.95)",
-    backdropFilter: "blur(8px)",
-    border: "1px solid rgba(139,92,246,0.2)",
-    borderRadius: "12px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+  const chartTheme = {
+    tooltip: {
+      contentStyle: {
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        backdropFilter: "blur(12px)",
+        border: "1px solid rgba(0, 0, 0, 0.05)",
+        borderRadius: "24px",
+        boxShadow: "0 25px 50px -12px rgba(0,0,0,0.1)",
+        padding: "20px"
+      },
+      itemStyle: { color: "#0f172a", fontWeight: "900", fontSize: "14px", textTransform: "uppercase", italic: "true" },
+      labelStyle: { color: "#64748b", fontWeight: "bold", fontSize: "10px", marginBottom: "8px", textTransform: "uppercase" }
+    }
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
-        <DashboardNavbar />
+    <DashboardLayout 
+      title="Terminal Hub" 
+      subtitle="Alpha Administrative Index / Level 4"
+      tabs={TABS}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      <div className="space-y-16">
+        {/* Signal Alerts */}
+        <AnimatePresence>
+           {(actionMsg || actionErr) && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className={`flex items-center gap-6 px-10 py-6 rounded-[2.5rem] border shadow-2xl relative z-50 ${
+                   actionErr ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-emerald-50 border-emerald-200 text-emerald-600'
+                }`}
+              >
+                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${actionErr ? 'bg-rose-200' : 'bg-emerald-200'}`}>
+                    {actionErr ? <ShieldAlert size={24} /> : <CheckCircle size={24} />}
+                 </div>
+                 <span className="text-sm font-black uppercase tracking-[0.2em] italic">{actionMsg || actionErr}</span>
+              </motion.div>
+           )}
+        </AnimatePresence>
 
-        <div className="flex gap-6 mt-4">
-          {/* ── Sidebar ──────────────────────────────────────── */}
-          <div className="hidden lg:flex flex-col w-64 flex-shrink-0">
-            <DashboardSidebar items={sidebarItems} />
-          </div>
-
-          {/* ── Main Content ─────────────────────────────────── */}
-          <div className="flex-1 space-y-6 min-w-0">
-            {/* Header */}
-            <GlassCard className="p-6 bg-gradient-to-r from-purple-600/20 to-blue-600/20">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    Admin Dashboard 🛠️
-                  </h1>
-                  <p className="text-gray-600 mt-1">
-                    Platform overview & management
-                  </p>
-                </div>
-                <button
-                  onClick={loadAll}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Refresh
-                </button>
-              </div>
-            </GlassCard>
-
-            {/* Flash messages */}
-            {actionMsg && (
-              <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-700">
-                <CheckCircle className="w-5 h-5" />
-                {actionMsg}
-              </div>
-            )}
-            {actionErr && (
-              <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700">
-                <AlertCircle className="w-5 h-5" />
-                {actionErr}
-              </div>
-            )}
-
-            {/* Tab Nav */}
-            <div className="flex gap-2 flex-wrap">
-              {TABS.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 rounded-xl font-medium transition-all text-sm ${
-                    activeTab === tab
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
-                      : "bg-white/60 text-gray-600 border border-white/60 hover:bg-white hover:text-gray-900"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+        {activeTab === "Overview" && (
+          <div className="space-y-16">
+            {/* Metric Matrix */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              <StatCard icon={Users} label="Total Scholars" value={fmt(s.users?.total)} trend={`+${s.users?.new_this_month || 0} New`} variant="primary" />
+              <StatCard icon={Package} label="Registry Units" value={fmt(s.courses?.total)} trend={`${s.courses?.approved || 0} Verified`} variant="purple" />
+              <StatCard icon={DollarSign} label="Equity Hub" value={fmtMoney(s.revenue?.total)} trend={`+${fmtMoney(s.revenue?.this_month)} Gain`} variant="success" />
+              <StatCard icon={Activity} label="Signal Density" value={fmt(s.enrollments?.total)} trend={`${s.enrollments?.paid || 0} Premium`} variant="warning" />
             </div>
 
-            {/* ══════════════════ OVERVIEW TAB ══════════════════ */}
-            {activeTab === "Overview" && (
-              <>
-                {/* Stat Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <StatTile
-                    icon={Users}
-                    label="Total Users"
-                    value={fmt(s.users?.total)}
-                    sub={`+${s.users?.new_this_month || 0} this month`}
-                    gradient="from-purple-500 to-pink-500"
-                  />
-                  <StatTile
-                    icon={BookOpen}
-                    label="Total Courses"
-                    value={fmt(s.courses?.total)}
-                    sub={`${s.courses?.approved || 0} approved`}
-                    gradient="from-blue-500 to-cyan-500"
-                  />
-                  <StatTile
-                    icon={DollarSign}
-                    label="Total Revenue"
-                    value={fmtMoney(s.revenue?.total)}
-                    sub={`${fmtMoney(s.revenue?.this_month)} this month`}
-                    gradient="from-violet-500 to-purple-500"
-                  />
-                  <StatTile
-                    icon={TrendingUp}
-                    label="Enrollments"
-                    value={fmt(s.enrollments?.total)}
-                    sub={`${s.enrollments?.paid || 0} paid`}
-                    gradient="from-emerald-500 to-teal-500"
-                  />
-                </div>
+            {/* Matrix Charts */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+               <GlassCard className="p-12 bg-white border-slate-100 shadow-2xl shadow-slate-200/50">
+                  <div className="flex items-center justify-between mb-12">
+                     <div>
+                        <h4 className="text-xs font-black text-indigo-600 uppercase tracking-[0.4em] mb-1 leading-none italic">Growth Projection</h4>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">6-Phase Temporal Flow</p>
+                     </div>
+                     <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-400 border border-indigo-100"><TrendingUp size={24} /></div>
+                  </div>
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={growth}>
+                        <defs>
+                          <linearGradient id="pGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.15} />
+                            <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.03)" vertical={false} />
+                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: '900' }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: '900' }} />
+                        <Tooltip {...chartTheme.tooltip} />
+                        <Area type="monotone" dataKey="users" name="Nodes Joined" stroke="#4f46e5" fill="url(#pGrad)" strokeWidth={4} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+               </GlassCard>
 
-                {/* Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <GlassCard className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Platform Growth (6 months)
-                    </h3>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={growth}>
-                          <defs>
-                            <linearGradient id="uGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#9333ea" stopOpacity={0.3} />
-                              <stop offset="95%" stopColor="#9333ea" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                          <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                          <Tooltip contentStyle={tooltipStyle} />
-                          <Area type="monotone" dataKey="users" name="New Users" stroke="#9333ea" fill="url(#uGrad)" strokeWidth={2} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </GlassCard>
+               <GlassCard className="p-12 bg-white border-slate-100 shadow-2xl shadow-slate-200/50">
+                  <div className="flex items-center justify-between mb-12">
+                     <div>
+                        <h4 className="text-xs font-black text-indigo-600 uppercase tracking-[0.4em] mb-1 leading-none italic">Knowledge Allocation</h4>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Global Artifact Distribution</p>
+                     </div>
+                     <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-400 border border-rose-100"><Layers size={24} /></div>
+                  </div>
+                  <div className="h-96">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={catData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.03)" vertical={false} />
+                        <XAxis dataKey="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: '900' }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: '900' }} />
+                        <Tooltip {...chartTheme.tooltip} />
+                        <Bar dataKey="courses" name="Units" fill="#4f46e5" radius={[10, 10, 0, 0]} />
+                        <Bar dataKey="students" name="Scholars" fill="#ec4899" radius={[10, 10, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+               </GlassCard>
+            </div>
 
-                  <GlassCard className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Category Distribution
-                    </h3>
-                    <div className="h-64">
-                      {catData.length === 0 ? (
-                        <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-                          No categories yet. Create categories in the backend admin.
-                        </div>
-                      ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={catData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                            <XAxis dataKey="category" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                            <Tooltip contentStyle={tooltipStyle} />
-                            <Legend />
-                            <Bar dataKey="courses" name="Courses" fill="#9333ea" radius={[6, 6, 0, 0]} />
-                            <Bar dataKey="students" name="Students" fill="#2563eb" radius={[6, 6, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      )}
-                    </div>
-                  </GlassCard>
-                </div>
-
-                {/* Recent Users + System Status */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <GlassCard className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Recent Registrations
-                    </h3>
-                    <div className="space-y-3">
-                      {recentUsers.length === 0 ? (
-                        <p className="text-gray-400 text-sm">No users yet.</p>
-                      ) : (
-                        recentUsers.map((u) => (
-                          <div
-                            key={u.id}
-                            className="flex items-center justify-between p-3 bg-white/60 rounded-xl border border-white/60"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+            {/* Data Matrices */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 items-start">
+               {/* Left Column: Identities */}
+               <div className="xl:col-span-4 space-y-8">
+                  <h3 className="text-xs font-black text-indigo-600 uppercase tracking-[0.5em] italic flex items-center gap-4">
+                     <Globe size={20} /> Identity Registry
+                  </h3>
+                  <div className="space-y-6">
+                     {recentUsers.map((u, i) => (
+                        <div key={u.id} className="group flex items-center justify-between p-7 bg-white border border-slate-100 rounded-[2rem] hover:shadow-2xl hover:scale-105 transition-all">
+                           <div className="flex items-center gap-6">
+                              <div className="w-14 h-14 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center font-black text-slate-300 text-lg group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all">
                                 {u.username?.[0]?.toUpperCase()}
                               </div>
                               <div>
-                                <p className="font-semibold text-gray-900 text-sm">{u.username}</p>
-                                <p className="text-xs text-gray-500">{u.email}</p>
+                                <p className="text-sm font-black text-slate-900 uppercase italic tracking-tighter leading-none mb-1">{u.username}</p>
+                                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none">Joined: {u.joined}</p>
                               </div>
-                            </div>
-                            <div className="text-right">
-                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${ROLE_COLORS[u.role] || "bg-gray-100 text-gray-600"}`}>
-                                {u.role}
-                              </span>
-                              <p className="text-xs text-gray-400 mt-1">{u.joined}</p>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </GlassCard>
-
-                  <GlassCard className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      System Status
-                    </h3>
-                    <div className="space-y-3">
-                      {[
-                        { name: "API Server", uptime: "99.99%" },
-                        { name: "Database", uptime: "99.98%" },
-                        { name: "Media Storage", uptime: "99.95%" },
-                        { name: "Auth Service", uptime: "100%" },
-                      ].map((sys) => (
-                        <div
-                          key={sys.name}
-                          className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-xl"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
-                            <div className="flex items-center gap-2">
-                              <Activity className="w-4 h-4 text-green-600" />
-                              <span className="font-medium text-gray-800 text-sm">{sys.name}</span>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-xs text-green-600 font-medium">Operational</span>
-                            <p className="text-xs text-gray-500">{sys.uptime} uptime</p>
-                          </div>
+                           </div>
+                           <span className={`text-[9px] font-black px-4 py-1.5 rounded-full border italic tracking-widest ${ROLE_COLORS[u.role]}`}>
+                             {u.role}
+                           </span>
                         </div>
-                      ))}
-                    </div>
-                  </GlassCard>
-                </div>
+                     ))}
+                  </div>
+               </div>
 
-                {/* Pending Instructor Applications */}
-                {pendingInstructors.length > 0 && (
-                  <GlassCard className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Pending Instructor Applications ({pendingInstructors.length})
-                    </h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-left text-sm text-gray-500 border-b border-gray-200">
-                            <th className="pb-3 pr-4">Applicant</th>
-                            <th className="pb-3 pr-4">Expertise</th>
-                            <th className="pb-3 pr-4">Experience</th>
-                            <th className="pb-3 pr-4">Applied</th>
-                            <th className="pb-3">Actions</th>
-                          </tr>
+               {/* Middle Column: Top Performing Nodes */}
+               <div className="xl:col-span-8 space-y-8">
+                  <h3 className="text-xs font-black text-indigo-600 uppercase tracking-[0.5em] italic flex items-center gap-4">
+                     <Zap size={20} /> Top Performing Knowledge Nodes
+                  </h3>
+                  <div className="bg-white border border-slate-100 rounded-[3rem] overflow-hidden shadow-2xl shadow-slate-200/40">
+                     <table className="w-full text-left">
+                        <thead className="bg-slate-50 border-b border-slate-100">
+                           <tr>
+                              <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Knowledge Unit</th>
+                              <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic text-center">Sync Count</th>
+                              <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic text-center">Revenue Signal</th>
+                              <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic text-right">Scholarly Rating</th>
+                           </tr>
                         </thead>
-                        <tbody>
-                          {pendingInstructors.map((inst) => (
-                            <tr key={inst.id} className="border-b border-gray-100 hover:bg-purple-50/30 transition-colors">
-                              <td className="py-3 pr-4">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                    {inst.username?.[0]?.toUpperCase()}
-                                  </div>
-                                  <div>
-                                    <p className="font-semibold text-gray-900 text-sm">{inst.username}</p>
-                                    <p className="text-xs text-gray-500">{inst.email}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="py-3 pr-4 text-sm text-gray-700">{inst.expertise || "—"}</td>
-                              <td className="py-3 pr-4 text-sm text-gray-700">{inst.years_of_experience ? `${inst.years_of_experience} yrs` : "—"}</td>
-                              <td className="py-3 pr-4 text-sm text-gray-500">{inst.date_joined}</td>
-                              <td className="py-3">
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => handleApproveInstructor(inst.id, inst.username)}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
-                                  >
-                                    <CheckCircle className="w-3.5 h-3.5" />
-                                    Approve
-                                  </button>
-                                  <button
-                                    onClick={() => handleRejectInstructor(inst.id, inst.username)}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
-                                  >
-                                    <XCircle className="w-3.5 h-3.5" />
-                                    Reject
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
+                        <tbody className="divide-y divide-slate-50">
+                           {s.top_courses?.map((course) => (
+                              <tr key={course.id} className="hover:bg-indigo-50/10 transition-all group">
+                                 <td className="p-8">
+                                    <p className="text-sm font-black text-slate-900 uppercase italic tracking-tighter leading-none mb-1">{course.title}</p>
+                                    <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Node ID: {course.id.toString().padStart(4, '0')}</p>
+                                 </td>
+                                 <td className="p-8 text-center text-sm font-black text-slate-900 italic tracking-tighter">{course.enrollments} Units</td>
+                                 <td className="p-8 text-center text-sm font-black text-emerald-600 italic tracking-tighter">${course.revenue} Yield</td>
+                                 <td className="p-8 text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                       <Star size={12} fill="#eab308" stroke="none" />
+                                       <span className="text-xs font-black text-slate-900 italic">{course.rating}</span>
+                                    </div>
+                                 </td>
+                              </tr>
+                           ))}
                         </tbody>
-                      </table>
-                    </div>
-                  </GlassCard>
-                )}
-              </>
-            )}
+                     </table>
+                  </div>
 
-            {/* ══════════════════ COURSES TAB ══════════════════ */}
-            {activeTab === "Courses" && (
-              <GlassCard className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Course Management
-                  </h3>
-                  <div className="flex gap-2 text-sm">
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full font-medium">
-                      {pendingCourses.length} pending
-                    </span>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full font-medium">
-                      {courses.filter((c) => c.is_approved).length} approved
-                    </span>
-                  </div>
-                </div>
-
-                {courses.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400">
-                    <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                    <p>No courses found</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="text-left text-sm text-gray-500 border-b border-gray-200">
-                          <th className="pb-3 pr-4">Course</th>
-                          <th className="pb-3 pr-4">Instructor</th>
-                          <th className="pb-3 pr-4">Price</th>
-                          <th className="pb-3 pr-4">Enrollments</th>
-                          <th className="pb-3 pr-4">Status</th>
-                          <th className="pb-3">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {courses.map((course) => (
-                          <tr key={course.id} className="border-b border-gray-100 hover:bg-purple-50/30 transition-colors">
-                            <td className="py-3 pr-4">
-                              <p className="font-semibold text-gray-900 text-sm max-w-[200px] truncate">{course.title}</p>
-                              <p className="text-xs text-gray-400">{course.category_name || "No category"}</p>
-                            </td>
-                            <td className="py-3 pr-4 text-sm text-gray-700">{course.instructor_name}</td>
-                            <td className="py-3 pr-4 text-sm text-gray-700">
-                              {parseFloat(course.price) === 0 ? (
-                                <span className="text-green-600 font-medium">Free</span>
-                              ) : (
-                                `$${course.price}`
-                              )}
-                            </td>
-                            <td className="py-3 pr-4 text-sm text-gray-700">{course.enrollment_count || 0}</td>
-                            <td className="py-3 pr-4">
-                              <div className="flex flex-col gap-1">
-                                {course.is_approved ? (
-                                  <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full w-fit">✅ Approved</span>
-                                ) : course.is_submitted ? (
-                                  <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full w-fit">⏳ Pending</span>
-                                ) : (
-                                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full w-fit">📝 Draft</span>
-                                )}
-                                {course.is_published && (
-                                  <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full w-fit">🌐 Published</span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-3">
-                              <div className="flex gap-2">
-                                {!course.is_approved ? (
-                                  <button
-                                    onClick={() => handleCourseApprove(course.id, course.title)}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-xs font-medium"
-                                  >
-                                    <ShieldCheck className="w-3.5 h-3.5" />
-                                    Approve
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => handleCourseUnapprove(course.id, course.title)}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors text-xs font-medium"
-                                  >
-                                    <XCircle className="w-3.5 h-3.5" />
-                                    Revoke
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </GlassCard>
-            )}
-
-            {/* ══════════════════ USERS TAB ══════════════════ */}
-            {activeTab === "Users" && (
-              <GlassCard className="p-6">
-                <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    All Users ({users.length})
-                  </h3>
-                  <div className="flex gap-2 text-sm">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
-                      {users.filter((u) => u.role === "STUDENT").length} Students
-                    </span>
-                    <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
-                      {users.filter((u) => u.role === "INSTRUCTOR").length} Instructors
-                    </span>
-                  </div>
-                </div>
-
-                {users.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400">
-                    <Users className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                    <p>No users found</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="text-left text-sm text-gray-500 border-b border-gray-200">
-                          <th className="pb-3 pr-4">User</th>
-                          <th className="pb-3 pr-4">Email</th>
-                          <th className="pb-3 pr-4">Role</th>
-                          <th className="pb-3 pr-4">Joined</th>
-                          <th className="pb-3">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {users.map((u) => (
-                          <tr key={u.id} className="border-b border-gray-100 hover:bg-purple-50/30 transition-colors">
-                            <td className="py-3 pr-4">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                  {u.username?.[0]?.toUpperCase()}
-                                </div>
-                                <span className="font-medium text-gray-900 text-sm">{u.username}</span>
-                              </div>
-                            </td>
-                            <td className="py-3 pr-4 text-sm text-gray-600">{u.email}</td>
-                            <td className="py-3 pr-4">
-                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${ROLE_COLORS[u.role] || "bg-gray-100 text-gray-600"}`}>
-                                {u.role}
-                              </span>
-                            </td>
-                            <td className="py-3 pr-4 text-xs text-gray-500">
-                              {u.date_joined ? new Date(u.date_joined).toLocaleDateString() : "—"}
-                            </td>
-                            <td className="py-3">
-                              {u.role === "STUDENT" && u.expertise && (
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => handleApproveInstructor(u.id, u.username)}
-                                    className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-xs font-medium"
-                                  >
-                                    <CheckCircle className="w-3 h-3" />
-                                    Promote
-                                  </button>
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </GlassCard>
-            )}
-
-            {/* ══════════════════ CATEGORIES TAB ══════════════════ */}
-            {activeTab === "Categories" && (
-              <GlassCard className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                  Category Analytics
-                </h3>
-                {catData.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400">
-                    <BarChart2 className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                    <p>No categories found. Create them in the Django admin panel.</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="h-80 mb-8">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={catData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                          <XAxis dataKey="category" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                          <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={tooltipStyle} />
-                          <Legend />
-                          <Bar dataKey="courses" name="Courses" fill="#9333ea" radius={[8, 8, 0, 0]} />
-                          <Bar dataKey="students" name="Students" fill="#2563eb" radius={[8, 8, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {catData.map((cat) => (
-                        <div
-                          key={cat.category}
-                          className="p-4 bg-white/70 border border-white/60 rounded-xl"
-                        >
-                          <h4 className="font-semibold text-gray-900 mb-2">{cat.category}</h4>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-purple-600 font-medium">{cat.courses} courses</span>
-                            <span className="text-blue-600 font-medium">{cat.students} students</span>
-                          </div>
+                  {/* Faculty Approvals moved here/below if space exists */}
+                  <div className="space-y-8 pt-8 border-t border-slate-100">
+                     <h3 className="text-xs font-black text-indigo-600 uppercase tracking-[0.5em] italic flex items-center gap-4">
+                          <ShieldCheck size={20} /> Faculty Approvals
+                     </h3>
+                     {pendingInstructors.length > 0 ? (
+                        <div className="bg-white border border-slate-100 rounded-[3rem] overflow-hidden shadow-sm">
+                           <table className="w-full text-left">
+                              <thead className="bg-slate-50 border-b border-slate-100">
+                                 <tr>
+                                    <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Identity</th>
+                                    <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Field</th>
+                                    <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic text-right">Moderation</th>
+                                 </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-50">
+                                 {pendingInstructors.map(inst => (
+                                    <tr key={inst.id} className="hover:bg-slate-50 transition-all">
+                                       <td className="p-8">
+                                          <div className="flex items-center gap-4">
+                                             <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 font-black border border-amber-100">
+                                                {inst.username?.[0]?.toUpperCase()}
+                                             </div>
+                                             <div>
+                                                <p className="text-sm font-black text-slate-900 uppercase italic leading-none mb-1">{inst.username}</p>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{inst.email}</p>
+                                             </div>
+                                          </div>
+                                       </td>
+                                       <td className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{inst.expertise || "CORE"}</td>
+                                       <td className="p-8 text-right">
+                                          <div className="flex justify-end gap-3">
+                                             <button onClick={() => handleApproveInstructor(inst.id, inst.username)} className="h-10 w-10 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all"><CheckCircle size={18} /></button>
+                                             <button className="h-10 w-10 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all"><XCircle size={18} /></button>
+                                          </div>
+                                       </td>
+                                    </tr>
+                                 ))}
+                              </tbody>
+                           </table>
                         </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </GlassCard>
-            )}
+                     ) : (
+                        <div className="p-20 bg-white border border-slate-100 rounded-[3rem] text-center italic text-slate-300 font-black text-xs uppercase tracking-[0.5em] shadow-inner">
+                           No Signal Requests Detected
+                        </div>
+                     )}
+                  </div>
+               </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Courses Tab Content */}
+        {activeTab === "Courses" && (
+           <div className="space-y-12">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-slate-100 pb-12">
+                 <h3 className="text-xs font-black text-indigo-600 uppercase tracking-[0.5em] italic flex items-center gap-4">
+                    <Package size={20} /> Curricular Inventory
+                 </h3>
+                 <div className="flex gap-4">
+                    <span className="px-6 py-2 bg-amber-50 text-amber-600 border border-amber-100 rounded-full text-[10px] font-black uppercase tracking-widest italic">{pendingCourses.length} Review</span>
+                    <span className="px-6 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-full text-[10px] font-black uppercase tracking-widest italic">{courses.length} Total</span>
+                 </div>
+              </div>
+
+              <div className="bg-white border border-slate-100 rounded-[4rem] overflow-hidden shadow-2xl shadow-slate-200/50">
+                 <table className="w-full text-left">
+                    <thead className="bg-slate-50 border-b border-slate-100">
+                       <tr>
+                          <th className="p-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Artifact Unit</th>
+                          <th className="p-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Faculty Source</th>
+                          <th className="p-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Unit Price</th>
+                          <th className="p-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic text-center">Protocol Status</th>
+                          <th className="p-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic text-right">Moderation</th>
+                       </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                       {courses.map(course => (
+                          <tr key={course.id} className="hover:bg-indigo-50/10 transition-all group">
+                             <td className="p-10">
+                                <p className="text-lg font-black text-slate-900 uppercase italic tracking-tighter leading-none mb-2">{course.title}</p>
+                                <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] italic">{course.category_name || "MASTER MODULE"}</p>
+                             </td>
+                             <td className="p-10 text-[11px] font-black text-slate-600 uppercase italic tracking-widest">{course.instructor_name}</td>
+                             <td className="p-10 text-xl font-black text-slate-900 italic tracking-tighter">${course.price}</td>
+                             <td className="p-10 text-center">
+                                {course.is_approved ? (
+                                   <span className="px-5 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 text-[10px] font-black uppercase tracking-widest rounded-full italic">Verified Hub</span>
+                                ) : (
+                                   <span className="px-5 py-2 bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-black uppercase tracking-widest rounded-full italic">Initialization</span>
+                                )}
+                             </td>
+                             <td className="p-10 text-right">
+                                {!course.is_approved ? (
+                                   <button onClick={() => handleCourseApprove(course.id, course.title)} className="h-12 px-8 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] shadow-xl shadow-indigo-600/20 hover:bg-indigo-500 transition-all">Authorize Node</button>
+                                ) : (
+                                   <button className="h-12 w-12 bg-white border border-slate-100 text-slate-200 hover:text-rose-500 hover:border-rose-100 rounded-2xl flex items-center justify-center transition-all"><XCircle size={24} /></button>
+                                )}
+                             </td>
+                          </tr>
+                       ))}
+                    </tbody>
+                 </table>
+              </div>
+           </div>
+        )}
+
+        {/* Analytics Tab (Figma Charts Expanded) */}
+        {activeTab === "Analytics" && (
+           <div className="space-y-16 animate-in slide-in-from-bottom-8 duration-700">
+              <div className="max-w-3xl space-y-4">
+                 <h3 className="text-xs font-black text-indigo-600 uppercase tracking-[0.5em] italic flex items-center gap-4">
+                    <BarChart2 size={24} /> Global Distribution Logic
+                 </h3>
+                 <p className="text-xl font-medium text-slate-500 italic uppercase tracking-[0.1em]">Statistical analysis of the synchronized knowledge index across all faculty nodes.</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                 <GlassCard className="lg:col-span-8 p-16 bg-white border-slate-100 shadow-2xl">
+                    <div className="h-[500px]">
+                       <ResponsiveContainer width="100%" height="100%">
+                         <BarChart data={catData}>
+                           <defs>
+                              <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                                 <stop offset="0%" stopColor="#4f46e5" stopOpacity={1} />
+                                 <stop offset="100%" stopColor="#818cf8" stopOpacity={0.8} />
+                              </linearGradient>
+                           </defs>
+                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.03)" vertical={false} />
+                           <XAxis dataKey="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: '900' }} />
+                           <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: '900' }} />
+                           <Tooltip {...chartTheme.tooltip} cursor={{ fill: '#f8fafc' }} />
+                           <Bar dataKey="students" name="Nodes Density" fill="url(#barGrad)" radius={[16, 16, 0, 0]} barSize={60} />
+                         </BarChart>
+                       </ResponsiveContainer>
+                    </div>
+                 </GlassCard>
+
+                 <div className="lg:col-span-4 flex flex-col gap-8">
+                    {catData.map((cat, i) => (
+                       <GlassCard key={i} className="p-8 bg-white border-slate-100 group hover:border-indigo-600/30 transition-all">
+                          <div className="flex items-center justify-between mb-4">
+                             <h4 className="text-sm font-black text-slate-900 uppercase italic tracking-tighter leading-none">{cat.category}</h4>
+                             <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform"><Info size={16} /></div>
+                          </div>
+                          <div className="flex justify-between items-baseline">
+                             <span className="text-xs font-black text-slate-400 uppercase tracking-widest italic">{cat.students} Scholars Synced</span>
+                             <span className="text-2xl font-black text-slate-900 italic tracking-tighter leading-none">{Math.round((cat.students / (s.users?.total || 1)) * 100)}%</span>
+                          </div>
+                          <div className="mt-6 h-1 bg-slate-100 rounded-full overflow-hidden">
+                             <motion.div initial={{ width: 0 }} animate={{ width: `${(cat.students / (s.users?.total || 1)) * 100}%` }} className="h-full bg-indigo-600" />
+                          </div>
+                       </GlassCard>
+                    ))}
+                 </div>
+              </div>
+           </div>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
